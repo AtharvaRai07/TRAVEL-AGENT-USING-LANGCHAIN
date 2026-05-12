@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: party-travel-planner
+    runtime: python
+    pythonVersion: "3.12"
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python main.py"
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: SUPABASE_URL
+        fromDatabase:
+          name: party_db
+          property: SUPABASE_URL
+      - key: SUPABASE_KEY
+        fromDatabase:
+          name: party_db
+          property: SUPABASE_KEY
+      - key: GROQ_API_KEY
+        fromDatabase:
+          name: party_db
+          property: GROQ_API_KEY
+      - key: RAPIDAPI_KEY
+        fromDatabase:
+          name: party_db
+          property: RAPIDAPI_KEY
+      - key: FOURSQUARE_API_KEY
+        fromDatabase:
+          name: party_db
+          property: FOURSQUARE_API_KEY
+    disk:
+      name: party_data
+      mountPath: /var/data
+      sizeGB: 1

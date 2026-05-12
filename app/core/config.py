@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     app_name: str = "Travel Paglu"
     environment: str = "development"
     debug: bool = True
-    host: str = "127.0.0.1"
+    host: str = "0.0.0.0"  # Changed for production (Render requires 0.0.0.0)
     port: int = 8000
 
     # Supabase Config

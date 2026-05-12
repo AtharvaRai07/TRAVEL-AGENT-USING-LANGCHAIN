@@ -2,6 +2,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -16,6 +17,16 @@ BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 app = FastAPI(title=settings.app_name, debug=settings.debug)
+
+# Add CORS middleware for production
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins (safe for public APIs)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(router)
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
