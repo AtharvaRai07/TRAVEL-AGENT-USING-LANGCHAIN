@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PARTY Dashboard - Travel Planner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:opsz@9..144&family=Sora:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+
+<body>
+    <header class="dashboard-header">
+        <div class="header-content">
+            <h1 class="logo">PARTY</h1>
+            <div class="user-section">
+                <span id="user-name" class="user-greeting"></span>
+                <button id="logout-btn" class="btn-logout">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <!-- Sidebar for Past Plans -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h3>Your Plans</h3>
+                <button id="new-plan-btn" class="btn-new-plan" title="Create new plan">+</button>
+            </div>
+            <div id="plans-list" class="plans-list">
+                <p class="loading-text">Loading your plans...</p>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="tabs-container">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="planner">Travel Planner</button>
+                    <button class="tab-btn" data-tab="chatbot">Travel Chatbot</button>
+                </div>
+
+                <!-- Travel Planner Tab -->
+                <div id="planner" class="tab-content active">
+                    <section class="panel form-panel">
+                        <h2>Create Premium Plan</h2>
+                        <form id="plan-form" class="grid">
+                            <label>
+                                City
+                                <input name="city" required placeholder="Paris" />
+                            </label>
+                            <label>
+                                Check-in
+                                <input type="date" name="check_in" required />
+                            </label>
+                            <label>
+                                Check-out
+                                <input type="date" name="check_out" required />
+                            </label>
+                            <label>
+                                Adults
+                                <input type="number" name="adults" min="1" max="10" value="2" required />
+                            </label>
+                            <label>
+                                Budget Amount
+                                <input type="number" name="budget_amount" min="0" step="100" value="50000" required />
+                            </label>
+                            <label>
+                                Budget Currency
+                                <input name="budget_currency" maxlength="3" value="INR" required />
+                            </label>
+                            <label class="full">
+                                Style
+                                <select name="style">
+                                    <option value="balanced">Balanced</option>
+                                    <option value="luxury">Luxury</option>
+                                    <option value="foodie">Foodie</option>
+                                    <option value="culture">Culture</option>
+                                </select>
+                            </label>
+                            <button type="submit" id="submit-btn">Generate Plan</button>
+                        </form>
+                    </section>
+
+                    <section id="result" class="panel hidden">
+                        <div class="result-header">
+                            <h2>Your Plan Output</h2>
+                            <button id="talk-more-btn" class="btn-talk-more">💬 Talk More About This Plan</button>
+                        </div>
+                        <div id="result-meta" class="meta"></div>
+                        <article id="result-content" class="markdown"></article>
+                    </section>
+                </div>
+
+                <!-- Chatbot Tab -->
+                <div id="chatbot" class="tab-content">
+                    <section class="panel form-panel">
+                        <h2>Travel Chatbot</h2>
+                        <form id="chatbot-form" class="grid">
+                            <div id="selected-plan-info" class="plan-info hidden">
+                                <p id="plan-info-text"></p>
+                            </div>
+                            <button type="button" id="load-plan-btn" class="hidden">Load My Travel Plan</button>
+                        </form>
+
+                        <div id="chatbot-status" class="hidden alert"></div>
+
+                        <div id="chatbot-container" class="hidden">
+                            <div id="chat-messages" class="chat-messages"></div>
+                            <div class="chat-input-group">
+                                <input type="text" id="chat-input" placeholder="Ask me anything about your trip..."
+                                    maxlength="2000" />
+                                <button type="button" id="send-btn">Send</button>
+                                <button type="button" id="clear-history-btn" class="secondary">Clear History</button>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Session Management
+        const userEmail = sessionStorage.getItem('userEmail');
+        const userName = sessionStorage.getItem('userName') || 'Traveler';
+
+        if (!userEmail) {
+            window.location.href = '/';
+        }
+
+        document.getElementById('user-name').textContent = `Welcome, ${userName}`;
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            sessionStorage.clear();
+            window.location.href = '/';
+        });
+
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                e.target.classList.add('active');
+                document.getElementById(e.target.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Load past plans
+        async function loadPastPlans() {
+            try {
+                const response = await fetch(`/api/v1/plans/${encodeURIComponent(userEmail)}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    displayPlans(data.plans || []);
+                }
+            } catch (error) {
+                console.error('Error loading plans:', error);
+            }
+        }
+
+        function displayPlans(plans) {
+            const plansList = document.getElementById('plans-list');
+            if (plans.length === 0) {
+                plansList.innerHTML = '<p class="empty-state">No plans yet. Create your first one!</p>';
+                return;
+            }
+            plansList.innerHTML = plans.map(plan => `
+                <div class="plan-item" data-destination="${plan.destination}">
+                    <h4>${plan.destination}</h4>
+                    <p class="plan-dates">${new Date(plan.check_in).toLocaleDateString()} - ${new Date(plan.check_out).toLocaleDateString()}</p>
+                </div>
+            `).join('');
+
+            document.querySelectorAll('.plan-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    selectPlan(item.dataset.destination);
+                });
+            });
+        }
+
+        function selectPlan(destination) {
+            // Highlight selected plan
+            document.querySelectorAll('.plan-item').forEach(p => p.classList.remove('active'));
+            document.querySelector(`[data-destination="${destination}"]`).classList.add('active');
+        }
+
+        // Travel Planner Form
+        document.getElementById('plan-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const data = {
+                email_id: userEmail,
+                city: formData.get('city'),
+                check_in: formData.get('check_in'),
+                check_out: formData.get('check_out'),
+                adults: parseInt(formData.get('adults')),
+                budget_amount: parseInt(formData.get('budget_amount')),
+                budget_currency: formData.get('budget_currency'),
+                style: formData.get('style')
+            };
+
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Generating...';
+
+            try {
+                const response = await fetch('/api/v1/plan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const plan = await response.json();
+                    displayPlan(plan);
+                    loadPastPlans();
+                } else {
+                    alert('Error generating plan');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Generate Plan';
+            }
+        });
+
+        function displayPlan(plan) {
+            document.getElementById('result').classList.remove('hidden');
+            // Extract dates from the plan response (they might be in itinerary or another field)
+            const checkIn = plan.check_in || 'Date';
+            const checkOut = plan.check_out || 'Date';
+            document.getElementById('result-meta').innerHTML = `
+                <p><strong>${plan.destination}</strong> • ${checkIn} to ${checkOut}</p>
+            `;
+            // Use final_response field for the plan content
+            const content = plan.final_response || 'No plan content available';
+            if (content && content.length > 0) {
+                // Check if content contains HTML tags (starts with < after trimming)
+                if (content.trim().startsWith('<')) {
+                    // Content is already HTML, render it directly
+                    document.getElementById('result-content').innerHTML = content;
+                } else {
+                    // Content is markdown, parse it
+                    document.getElementById('result-content').innerHTML = marked.parse(content);
+                }
+            } else {
+                document.getElementById('result-content').innerHTML = '<p>Plan generated but content is empty.</p>';
+            }
+            window.currentPlan = plan;
+        }
+
+        // Talk More Button
+        document.getElementById('talk-more-btn').addEventListener('click', () => {
+            const plan = window.currentPlan;
+            if (!plan) return;
+
+            // Store current plan in session
+            sessionStorage.setItem('currentPlanDestination', plan.destination);
+
+            // Switch to chatbot tab with animation
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector('[data-tab="chatbot"]').classList.add('active');
+            document.getElementById('chatbot').classList.add('active');
+
+            // Show plan info and load chatbot
+            const planInfo = document.getElementById('selected-plan-info');
+            const planInfoText = document.getElementById('plan-info-text');
+            planInfoText.textContent = `Chatting about ${plan.destination}`;
+            planInfo.classList.remove('hidden');
+
+            // Auto-load plan for chatbot
+            setTimeout(() => {
+                initiateChatbot(plan);
+            }, 300);
+        });
+
+        // Chatbot functionality
+        let currentUserEmail = null;
+        let currentChatPlan = null;
+
+        function initiateChatbot(plan) {
+            currentUserEmail = userEmail;
+            currentChatPlan = plan;
+
+            document.getElementById('chatbot-container').classList.remove('hidden');
+            document.getElementById('chatbot-status').classList.add('hidden');
+
+            // Add welcome message
+            addMessageToChat('bot', `Hello! 👋 I'm here to help you with your ${plan.destination} trip. Ask me anything about hotels, restaurants, attractions, budget optimization, or your itinerary!`);
+
+            document.getElementById('chat-input').focus();
+        }
+
+        document.getElementById('send-btn').addEventListener('click', async () => {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message || !currentUserEmail) return;
+
+            addMessageToChat('user', message);
+            input.value = '';
+
+            try {
+                const response = await fetch('/api/v1/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email_id: currentUserEmail,
+                        message: message
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addMessageToChat('bot', data.bot_response);
+                } else {
+                    const error = await response.json();
+                    addMessageToChat('bot', '❌ Error: ' + (error.detail || 'Unknown error'));
+                }
+            } catch (error) {
+                addMessageToChat('bot', '❌ Error: ' + error.message);
+            }
+        });
+
+        document.getElementById('chat-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('send-btn').click();
+            }
+        });
+
+        document.getElementById('clear-history-btn').addEventListener('click', async () => {
+            if (!currentUserEmail) return;
+            try {
+                await fetch(`/api/v1/chat/clear/${currentUserEmail}`, { method: 'POST' });
+                document.getElementById('chat-messages').innerHTML = '';
+                if (currentChatPlan) {
+                    initiateChatbot(currentChatPlan);
+                }
+            } catch (error) {
+                console.error('Error clearing history:', error);
+            }
+        });
+
+        function addMessageToChat(sender, text) {
+            const messagesDiv = document.getElementById('chat-messages');
+            const msgEl = document.createElement('div');
+            msgEl.className = `chat-message ${sender}`;
+
+            if (sender === 'bot') {
+                msgEl.innerHTML = `<div class="markdown-content">${marked.parse(text)}</div>`;
+            } else {
+                msgEl.innerHTML = `<p>${escapeHtml(text)}</p>`;
+            }
+
+            messagesDiv.appendChild(msgEl);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // New Plan Button
+        document.getElementById('new-plan-btn').addEventListener('click', () => {
+            document.getElementById('plan-form').reset();
+            document.getElementById('result').classList.add('hidden');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector('[data-tab="planner"]').classList.add('active');
+            document.getElementById('planner').classList.add('active');
+        });
+
+        // Initialize
+        loadPastPlans();
+    </script>
+</body>
+
+</html>

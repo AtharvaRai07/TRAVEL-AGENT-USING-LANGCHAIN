@@ -1,48 +1,214 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="panel form-panel">
-    <h2>Create Premium Plan</h2>
-    <form id="plan-form" class="grid">
-        <label>
-            City
-            <input name="city" required placeholder="Paris" />
-        </label>
-        <label>
-            Check-in
-            <input type="date" name="check_in" required />
-        </label>
-        <label>
-            Check-out
-            <input type="date" name="check_out" required />
-        </label>
-        <label>
-            Adults
-            <input type="number" name="adults" min="1" max="10" value="2" required />
-        </label>
-        <label>
-            Budget Amount
-            <input type="number" name="budget_amount" min="0" step="100" value="50000" required />
-        </label>
-        <label>
-            Budget Currency
-            <input name="budget_currency" maxlength="3" value="INR" required />
-        </label>
-        <label class="full">
-            Style
-            <select name="style">
-                <option value="balanced">Balanced</option>
-                <option value="luxury">Luxury</option>
-                <option value="foodie">Foodie</option>
-                <option value="culture">Culture</option>
-            </select>
-        </label>
-        <button type="submit" id="submit-btn">Generate Plan</button>
-    </form>
-</section>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<div class="tabs-container">
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="planner">Travel Planner</button>
+        <button class="tab-btn" data-tab="chatbot">Travel Chatbot</button>
+    </div>
 
-<section id="result" class="panel hidden">
-    <h2>Your Plan Output</h2>
-    <div id="result-meta" class="meta"></div>
-    <article id="result-content" class="markdown"></article>
-</section>
+    <!-- Travel Planner Tab -->
+    <div id="planner" class="tab-content active">
+        <section class="panel form-panel">
+            <h2>Create Premium Plan</h2>
+            <form id="plan-form" class="grid">
+                <label class="full">
+                    Email ID
+                    <input type="email" name="email_id" required placeholder="your.email@example.com" />
+                </label>
+                <label>
+                    City
+                    <input name="city" required placeholder="Paris" />
+                </label>
+                <label>
+                    Check-in
+                    <input type="date" name="check_in" required />
+                </label>
+                <label>
+                    Check-out
+                    <input type="date" name="check_out" required />
+                </label>
+                <label>
+                    Adults
+                    <input type="number" name="adults" min="1" max="10" value="2" required />
+                </label>
+                <label>
+                    Budget Amount
+                    <input type="number" name="budget_amount" min="0" step="100" value="50000" required />
+                </label>
+                <label>
+                    Budget Currency
+                    <input name="budget_currency" maxlength="3" value="INR" required />
+                </label>
+                <label class="full">
+                    Style
+                    <select name="style">
+                        <option value="balanced">Balanced</option>
+                        <option value="luxury">Luxury</option>
+                        <option value="foodie">Foodie</option>
+                        <option value="culture">Culture</option>
+                    </select>
+                </label>
+                <button type="submit" id="submit-btn">Generate Plan</button>
+            </form>
+        </section>
+
+        <section id="result" class="panel hidden">
+            <h2>Your Plan Output</h2>
+            <div id="result-meta" class="meta"></div>
+            <article id="result-content" class="markdown"></article>
+        </section>
+    </div>
+
+    <!-- Chatbot Tab -->
+    <div id="chatbot" class="tab-content">
+        <section class="panel form-panel">
+            <h2>Travel Chatbot</h2>
+            <form id="chatbot-form" class="grid">
+                <label class="full">
+                    Email ID (to fetch your travel plan)
+                    <input type="email" id="chatbot-email" name="email_id" required
+                        placeholder="your.email@example.com" />
+                </label>
+                <button type="button" id="load-plan-btn">Load My Travel Plan</button>
+            </form>
+
+            <div id="chatbot-status" class="hidden alert"></div>
+
+            <div id="chatbot-container" class="hidden">
+                <div id="chat-messages" class="chat-messages"></div>
+                <div class="chat-input-group">
+                    <input type="text" id="chat-input" placeholder="Ask me anything about your trip..."
+                        maxlength="2000" />
+                    <button type="button" id="send-btn">Send</button>
+                    <button type="button" id="clear-history-btn" class="secondary">Clear History</button>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<script>
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            e.target.classList.add('active');
+            document.getElementById(e.target.dataset.tab).classList.add('active');
+        });
+    });
+
+    // Chat functionality
+    let currentUserEmail = null;
+
+    document.getElementById('load-plan-btn').addEventListener('click', async () => {
+        const email = document.getElementById('chatbot-email').value;
+        if (!email) {
+            alert('Please enter your email');
+            return;
+        }
+        currentUserEmail = email;
+
+        try {
+            const response = await fetch(`/api/v1/chat/history/${email}`);
+            if (response.ok) {
+                document.getElementById('chatbot-status').classList.add('hidden');
+                document.getElementById('chatbot-container').classList.remove('hidden');
+                loadChatHistory();
+            } else {
+                showChatStatus('No travel plan found. Please create one first!', 'error');
+            }
+        } catch (error) {
+            showChatStatus('Error loading plan: ' + error.message, 'error');
+        }
+    });
+
+    document.getElementById('send-btn').addEventListener('click', async () => {
+        const input = document.getElementById('chat-input');
+        const message = input.value.trim();
+        if (!message || !currentUserEmail) return;
+
+        // Add user message to UI
+        addMessageToChat('user', message);
+        input.value = '';
+
+        try {
+            const response = await fetch('/api/v1/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email_id: currentUserEmail,
+                    message: message
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                addMessageToChat('bot', data.bot_response);
+            } else {
+                const error = await response.json();
+                addMessageToChat('bot', 'Error: ' + (error.detail || 'Unknown error'));
+            }
+        } catch (error) {
+            addMessageToChat('bot', 'Error: ' + error.message);
+        }
+    });
+
+    document.getElementById('chat-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            document.getElementById('send-btn').click();
+        }
+    });
+
+    document.getElementById('clear-history-btn').addEventListener('click', async () => {
+        if (!currentUserEmail) return;
+        try {
+            await fetch(`/api/v1/chat/clear/${currentUserEmail}`, { method: 'POST' });
+            document.getElementById('chat-messages').innerHTML = '';
+        } catch (error) {
+            console.error('Error clearing history:', error);
+        }
+    });
+
+    function addMessageToChat(sender, text) {
+        const messagesDiv = document.getElementById('chat-messages');
+        const msgEl = document.createElement('div');
+        msgEl.className = `chat-message ${sender}`;
+
+        if (sender === 'bot') {
+            // Render markdown for bot messages
+            msgEl.innerHTML = `<div class="markdown-content">${marked.parse(text)}</div>`;
+        } else {
+            // Plain text for user messages (security)
+            msgEl.innerHTML = `<p>${escapeHtml(text)}</p>`;
+        }
+
+        messagesDiv.appendChild(msgEl);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function showChatStatus(message, type) {
+        const status = document.getElementById('chatbot-status');
+        status.className = `alert alert-${type}`;
+        status.textContent = message;
+        status.classList.remove('hidden');
+    }
+
+    function loadChatHistory() {
+        // Clear messages on load
+        document.getElementById('chat-messages').innerHTML = '';
+    }
+
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+</script>
 {% endblock %}

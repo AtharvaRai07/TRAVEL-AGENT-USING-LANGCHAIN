@@ -1,4 +1,5 @@
 from pathlib import Path
+from dotenv import load_dotenv
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
@@ -8,6 +9,8 @@ from fastapi.templating import Jinja2Templates
 from app.api.routes import router
 from app.core.config import settings
 
+# Load environment variables
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -18,5 +21,10 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 
 
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request) -> HTMLResponse:
-    return templates.TemplateResponse("index.html", {"request": request, "app_name": settings.app_name})
+async def login(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse("login.html", {"request": request})
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse("dashboard.html", {"request": request, "app_name": settings.app_name})

@@ -1,4 +1,4 @@
-# Travel Web App 
+# Travel Web App
 
 Production-style FastAPI travel website
 

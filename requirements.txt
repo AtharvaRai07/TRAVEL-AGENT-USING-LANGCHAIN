@@ -10,3 +10,6 @@ uvicorn[standard]
 jinja2
 httpx
 pydantic-settings
+pydantic[email]
+supabase
+langchain-postgres

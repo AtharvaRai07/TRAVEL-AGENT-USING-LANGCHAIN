@@ -40,6 +40,7 @@ class PlannerService:
         )
 
         return PlanResponse(
+            email_id=req.email_id,
             destination=req.city,
             weather=weather,
             hotels=hotels,
