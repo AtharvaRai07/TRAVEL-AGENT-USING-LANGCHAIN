@@ -3,9 +3,9 @@ from dotenv import load_dotenv
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import TemplateResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.responses import TemplateResponse
 
 from app.api.routes import router
 from app.core.config import settings
@@ -33,9 +33,9 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 
 @app.get("/")
 async def login(request: Request):
-    return TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse("login.html", {"request": request})
 
 
 @app.get("/dashboard")
 async def dashboard(request: Request):
-    return TemplateResponse("dashboard.html", {"request": request, "app_name": settings.app_name})
+    return templates.TemplateResponse("dashboard.html", {"request": request, "app_name": settings.app_name})
