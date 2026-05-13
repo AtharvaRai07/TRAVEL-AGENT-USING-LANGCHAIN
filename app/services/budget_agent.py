@@ -16,8 +16,8 @@ class BudgetAgent:
         self.llm = ChatGroq(
             model="openai/gpt-oss-120b",
             api_key=os.getenv("GROQ_API_KEY", ""),
-            temperature=0.7,
-            max_tokens=2000,
+            temperature=0.55,
+            max_tokens=8192,
         )
 
         self.prompt_template = PromptTemplate(
@@ -32,7 +32,7 @@ class BudgetAgent:
                 "restaurants",
                 "attractions",
             ],
-            template="""You are an expert travel budget consultant. Create a comprehensive budget breakdown and optimization strategy for a trip.
+            template="""You are an expert travel budget consultant. Produce a thorough, actionable budget plan for this trip. Use only markdown (section headings + tables). Do not reply with only one or two sentences—fill every table with real numbers and multiple rows.
 
 Destination: {city}
 Total Budget: {budget_amount} {budget_currency}
@@ -49,45 +49,36 @@ Popular restaurants:
 Top attractions:
 {attractions}
 
-Please create a detailed budget plan that includes:
+Rules:
+- Express every amount in {budget_currency} (use integers or simple decimals). Show both trip totals and per-night or per-day figures where useful.
+- Three tiers: Budget-conscious (~35% of total), Moderate (~60%), Comfort/Premium (~100%). Derive numeric caps from {budget_amount}.
+- Name specific hotels, restaurants, and attractions drawn from the lists above when you recommend them (if a list is thin, say so in Notes and still give realistic placeholders).
+- Section headings: short Title Case only (e.g. "Lodging by tier") — never ALL CAPS blocks.
+- No long prose paragraphs outside tables; one optional 1–2 sentence intro after each heading is allowed, then the table must carry the detail.
 
-1. BUDGET BREAKDOWN by category:
-   - Accommodation (total & per night)
-   - Food & Dining (breakfast, lunch, dinner breakdown)
-   - Activities & Attractions
-   - Transportation (local transit, taxis, etc.)
-   - Contingency/Emergency fund (10-15%)
+Required structure (in this order):
 
-2. BUDGET TIERS (create 3 options):
-   - Budget-Conscious: ~35% of total
-   - Moderate/Balanced: ~60% of total
-   - Comfort/Premium: ~100% of total
+1) **Overview**
+   - One line stating trip length (nights between check-in and check-out) and adults.
 
-3. For each tier, provide:
-   - Specific accommodation recommendations from the provided list
-   - Restaurant recommendations (mix of street food, casual, upscale)
-   - Which attractions to prioritize
-   - Money-saving tips
+2) **Master allocation** — table columns: Category | Trip total ({budget_currency}) | Per night or per day | Notes
+   - Minimum rows: Accommodation, Food & dining, Activities & tickets, Local transport, Contingency (10–15%), **Total** (should reconcile with tier caps).
 
-4. DAILY BREAKDOWN:
-   - Show how to distribute budget across {check_in} to {check_out}
-   - Include tips for cutting costs without sacrificing experience
+3) **Tier summary** — table columns: Tier | % of full budget | Max spend ({budget_currency}) | Best for | Tradeoffs
 
-5. MONEY-SAVING STRATEGIES:
-   - Local deals and discounts
-   - Free activities in {city}
-   - Best times to visit specific venues
-   - Transportation optimization
+4) **Lodging by tier** — table columns: Tier | Property or area | Est. nightly rate | Est. trip lodging total | Why it fits
+   - At least **3 rows** (one per tier), more if you suggest alternates.
 
-Format the response as markdown tables only, with clear section headings.
-Section headings must be short Title Case (e.g. "Budget breakdown", "Recommendations by tier") — never ALL CAPS blocks.
+5) **Dining by tier** — table columns: Tier | Meal focus | Est. daily food | Est. trip food total | Example venues from list
 
-Use these tables:
-1. Budget breakdown table with columns: Category, Suggested Spend, Notes.
-2. Budget tier table with columns: Tier, Estimated Total, Best For.
-3. Daily spend table with columns: Date/Day, Planned Spend, Notes.
+6) **Activities by tier** — table columns: Tier | Must-do priorities | Est. spend | Booking or timing tip
 
-Keep the text short, direct, and easy to scan. Avoid long paragraphs and avoid bullet lists.""",
+7) **Daily cash plan** — table columns: Date or Day label | Planned spend ({budget_currency}) | Focus (e.g. transit day, big museum) | Cost-saving tip
+   - Include **one row per calendar day** from check-in through check-out (inclusive).
+
+8) **Savings and upgrades** — table columns: Idea | Saves or costs ({budget_currency}) | How to apply
+
+If you run out of space, prioritize completing tables 2–7 with full rows over optional intro text.""",
         )
 
         self.chain = self.prompt_template | self.llm | StrOutputParser()
