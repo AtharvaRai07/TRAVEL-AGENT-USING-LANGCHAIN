@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "Travel Paglu"
+    app_name: str = "Go Bharat"
     environment: str = "development"
     debug: bool = True
     host: str = "0.0.0.0"  # Changed for production (Render requires 0.0.0.0)

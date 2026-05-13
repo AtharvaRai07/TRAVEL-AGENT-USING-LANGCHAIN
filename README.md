@@ -1,6 +1,6 @@
-# Travel Web App
+# Go Bharat
 
-Production-style FastAPI travel website
+Production-style FastAPI travel website for planning trips across India.
 
 ## Highlights
 

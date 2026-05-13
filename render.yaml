@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: party-travel-planner
+    name: go-bharat-travel-planner
     runtime: python
     pythonVersion: "3.12"
     buildCommand: "pip install -r requirements.txt"

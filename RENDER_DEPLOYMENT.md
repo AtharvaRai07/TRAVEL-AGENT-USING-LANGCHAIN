@@ -17,7 +17,7 @@ git push origin main
 4. Connect your GitHub repository
 
 ### 3. Configure the Web Service
-- **Name**: `party-travel-planner` (or your preferred name)
+- **Name**: `go-bharat-travel-planner` (or your preferred name)
 - **Environment**: `Python 3`
 - **Build Command**: `pip install -r requirements.txt`
 - **Start Command**: `python main.py`
@@ -42,7 +42,7 @@ Click **Create Web Service** and Render will automatically:
 - Clone your repo
 - Install dependencies
 - Start your application
-- Assign a live URL (e.g., `https://party-travel-planner.onrender.com`)
+- Assign a live URL (e.g., `https://go-bharat-travel-planner.onrender.com`)
 
 ### 6. Verify Deployment
 1. Visit your assigned URL
@@ -80,7 +80,7 @@ If you see port 8000 already in use:
 - ✅ `host` set to `0.0.0.0` (not `127.0.0.1`)
 
 ### 500 Errors
-1. Check Render logs: Dashboard → Services → party-travel-planner → Logs
+1. Check Render logs: Dashboard → Services → go-bharat-travel-planner → Logs
 2. Verify all environment variables are set
 3. Verify Supabase credentials are correct
 
@@ -92,7 +92,7 @@ If you see port 8000 already in use:
 ## Your Live URL
 After deployment, share this URL:
 ```
-https://party-travel-planner.onrender.com
+https://go-bharat-travel-planner.onrender.com
 ```
 
 Users can visit this to create travel plans and chat with the AI chatbot!

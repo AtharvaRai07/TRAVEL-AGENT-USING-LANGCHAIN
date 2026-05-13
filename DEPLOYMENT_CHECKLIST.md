@@ -43,7 +43,7 @@ Visit: https://render.com
 1. Click **New +** → **Web Service**
 2. Select your repository
 3. Fill in:
-   - **Name**: `party-travel-planner`
+   - **Name**: `go-bharat-travel-planner`
    - **Environment**: `Python 3`
    - **Build Command**: `pip install -r requirements.txt`
    - **Start Command**: `python main.py`
@@ -66,7 +66,7 @@ ENVIRONMENT = production
 Click **Create Web Service**
 - Render will automatically deploy from `main` branch
 - Wait 2-5 minutes for build to complete
-- Your URL will be: `https://party-travel-planner.onrender.com`
+- Your URL will be: `https://go-bharat-travel-planner.onrender.com`
 
 ## ✨ After Deployment
 
@@ -78,13 +78,13 @@ Click **Create Web Service**
 5. Create another plan to verify multiple plans display
 
 ### Monitor Logs
-- Render Dashboard → Services → party-travel-planner → Logs
+- Render Dashboard → Services → go-bharat-travel-planner → Logs
 - Check for any errors
 
 ### Share Your App
 Send this URL to users:
 ```
-https://party-travel-planner.onrender.com
+https://go-bharat-travel-planner.onrender.com
 ```
 
 ## 🔄 Future Deployments

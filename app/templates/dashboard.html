@@ -4,23 +4,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PARTY Dashboard - Travel Planner</title>
+    <title>{{ app_name }} — Travel planner</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Fraunces:opsz@9..144&family=Sora:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Instrument+Serif:ital@0;1&display=swap"
         rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 
-<body>
+<body class="dashboard-page">
+    <div class="dashboard-bg" aria-hidden="true"></div>
     <header class="dashboard-header">
         <div class="header-content">
-            <h1 class="logo">PARTY</h1>
+            <div class="brand-lockup">
+                <span class="brand-mark" aria-hidden="true"></span>
+                <div>
+                    <h1 class="logo">{{ app_name }}</h1>
+                    <p class="tagline">Smart trips across India.</p>
+                </div>
+            </div>
             <div class="user-section">
                 <span id="user-name" class="user-greeting"></span>
-                <button id="logout-btn" class="btn-logout">Logout</button>
+                <button id="logout-btn" type="button" class="btn-logout">Sign out</button>
             </div>
         </div>
     </header>
@@ -28,79 +35,106 @@
     <div class="dashboard-container">
         <!-- Sidebar for Past Plans -->
         <aside class="sidebar">
-            <div class="sidebar-header">
-                <h3>Your Plans</h3>
-                <button id="new-plan-btn" class="btn-new-plan" title="Create new plan">+</button>
-            </div>
-            <div id="plans-list" class="plans-list">
-                <p class="loading-text">Loading your plans...</p>
+            <div class="sidebar-inner">
+                <div class="sidebar-header">
+                    <div>
+                        <p class="sidebar-eyebrow">Saved</p>
+                        <h3 class="sidebar-title">Your trips</h3>
+                    </div>
+                    <button id="new-plan-btn" type="button" class="btn-new-plan" title="Start a new plan"
+                        aria-label="Create new plan"><span class="btn-new-plan-icon">+</span></button>
+                </div>
+                <div id="plans-list" class="plans-list">
+                    <p class="loading-text">Loading your plans...</p>
+                </div>
             </div>
         </aside>
 
         <!-- Main Content -->
         <main class="main-content">
-            <div class="tabs-container">
-                <div class="tabs">
-                    <button class="tab-btn active" data-tab="planner">Travel Planner</button>
-                    <button class="tab-btn" data-tab="chatbot">Travel Chatbot</button>
-                </div>
+            <div class="main-inner">
+                <header class="main-hero">
+                    <p class="hero-eyebrow">Workspace</p>
+                    <h2 class="hero-title">Design your next escape</h2>
+                    <p class="hero-lede">Tell us where you are going—we will shape dates, budget, and style into a clear,
+                        ready-to-use itinerary.</p>
+                </header>
+
+                <div class="tabs-container">
+                    <div class="tabs" role="tablist" aria-label="Dashboard sections">
+                        <button type="button" class="tab-btn active" role="tab" aria-selected="true"
+                            data-tab="planner">Travel planner</button>
+                        <button type="button" class="tab-btn" role="tab" aria-selected="false"
+                            data-tab="chatbot">Travel chatbot</button>
+                    </div>
 
                 <!-- Travel Planner Tab -->
-                <div id="planner" class="tab-content active">
-                    <section class="panel form-panel">
-                        <h2>Create Premium Plan</h2>
-                        <form id="plan-form" class="grid">
-                            <label>
-                                City
-                                <input name="city" required placeholder="Paris" />
+                <div id="planner" class="tab-content active" role="tabpanel">
+                    <section class="panel form-panel panel-elevated">
+                        <div class="panel-head">
+                            <h2 class="panel-title">Create a premium plan</h2>
+                            <p class="panel-sub">Fields marked with intent—nothing extra. Adjust anytime.</p>
+                        </div>
+                        <form id="plan-form" class="grid plan-grid">
+                            <label class="field">
+                                <span class="field-label">Destination city</span>
+                                <input name="city" required placeholder="e.g. Lisbon, Tokyo, Paris" autocomplete="off" />
                             </label>
-                            <label>
-                                Check-in
+                            <label class="field">
+                                <span class="field-label">Check-in</span>
                                 <input type="date" name="check_in" required />
                             </label>
-                            <label>
-                                Check-out
+                            <label class="field">
+                                <span class="field-label">Check-out</span>
                                 <input type="date" name="check_out" required />
                             </label>
-                            <label>
-                                Adults
+                            <label class="field">
+                                <span class="field-label">Travelers</span>
                                 <input type="number" name="adults" min="1" max="10" value="2" required />
                             </label>
-                            <label>
-                                Budget Amount
+                            <label class="field">
+                                <span class="field-label">Budget amount</span>
                                 <input type="number" name="budget_amount" min="0" step="100" value="50000" required />
                             </label>
-                            <label>
-                                Budget Currency
-                                <input name="budget_currency" maxlength="3" value="INR" required />
+                            <label class="field">
+                                <span class="field-label">Currency</span>
+                                <input name="budget_currency" maxlength="3" value="INR" required
+                                    placeholder="INR, USD, EUR" />
                             </label>
-                            <label class="full">
-                                Style
+                            <label class="full field">
+                                <span class="field-label">Trip style</span>
                                 <select name="style">
-                                    <option value="balanced">Balanced</option>
-                                    <option value="luxury">Luxury</option>
-                                    <option value="foodie">Foodie</option>
-                                    <option value="culture">Culture</option>
+                                    <option value="balanced">Balanced — mix of comfort & discovery</option>
+                                    <option value="luxury">Luxury — elevated stays & dining</option>
+                                    <option value="foodie">Foodie — flavors & local tables</option>
+                                    <option value="culture">Culture — museums, history & walks</option>
                                 </select>
                             </label>
-                            <button type="submit" id="submit-btn">Generate Plan</button>
+                            <div class="form-actions full">
+                                <button type="submit" id="submit-btn" class="btn-primary-lg">Generate plan</button>
+                            </div>
                         </form>
                     </section>
 
-                    <section id="result" class="panel hidden">
+                    <section id="result" class="panel hidden panel-result">
                         <div class="result-header">
-                            <h2>Your Plan Output</h2>
-                            <button id="talk-more-btn" class="btn-talk-more">💬 Talk More About This Plan</button>
+                            <h2>Your itinerary</h2>
+                            <button type="button" id="talk-more-btn" class="btn-talk-more">Chat about this trip</button>
                         </div>
                         <div id="result-meta" class="meta"></div>
                         <article id="result-content" class="markdown"></article>
+                        <div id="plan-addons" class="plan-addons"></div>
                     </section>
                 </div>
 
                 <!-- Chatbot Tab -->
-                <div id="chatbot" class="tab-content">
-                    <section class="panel form-panel">
-                        <h2>Travel Chatbot</h2>
+                <div id="chatbot" class="tab-content" role="tabpanel">
+                    <section class="panel form-panel panel-elevated">
+                        <div class="panel-head">
+                            <h2 class="panel-title">Travel chatbot</h2>
+                            <p class="panel-sub">Ask follow-ups about hotels, food, pacing, or budget—grounded in your
+                                plan.</p>
+                        </div>
                         <form id="chatbot-form" class="grid">
                             <div id="selected-plan-info" class="plan-info hidden">
                                 <p id="plan-info-text"></p>
@@ -122,6 +156,7 @@
                     </section>
                 </div>
             </div>
+            </div>
         </main>
     </div>
 
@@ -142,12 +177,17 @@
         });
 
         // Tab switching
-        document.querySelectorAll('.tab-btn').forEach(btn => {
+        document.querySelectorAll('.tabs .tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                const target = e.currentTarget;
+                document.querySelectorAll('.tabs .tab-btn').forEach(b => {
+                    b.classList.remove('active');
+                    b.setAttribute('aria-selected', 'false');
+                });
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                e.target.classList.add('active');
-                document.getElementById(e.target.dataset.tab).classList.add('active');
+                target.classList.add('active');
+                target.setAttribute('aria-selected', 'true');
+                document.getElementById(target.dataset.tab).classList.add('active');
             });
         });
 
@@ -167,7 +207,12 @@
         function displayPlans(plans) {
             const plansList = document.getElementById('plans-list');
             if (plans.length === 0) {
-                plansList.innerHTML = '<p class="empty-state">No plans yet. Create your first one!</p>';
+                plansList.innerHTML = `
+                    <div class="empty-state">
+                        <span class="empty-icon" aria-hidden="true">✦</span>
+                        <p class="empty-title">No trips yet</p>
+                        <p class="empty-copy">Use the form to generate a plan—it will appear here for quick access.</p>
+                    </div>`;
                 return;
             }
             plansList.innerHTML = plans.map(plan => `
@@ -273,10 +318,12 @@
                 ${warningLine}
             `;
             // Use final_response field for the plan content
-            const content = plan.final_response || 'No plan content available';
+            const rawContent = plan.final_response || 'No plan content available';
+            const content = decodeHtmlEntities(String(rawContent)).trim();
+            const addons = document.getElementById('plan-addons');
             if (content && content.length > 0) {
-                // Check if content contains HTML tags (starts with < after trimming)
-                if (content.trim().startsWith('<')) {
+                // Render real HTML directly, but also support escaped HTML stored in the DB.
+                if (/<[a-z][\s\S]*>/i.test(content)) {
                     // Content is already HTML, render it directly
                     document.getElementById('result-content').innerHTML = content;
                 } else if (window.marked && typeof window.marked.parse === 'function') {
@@ -289,7 +336,70 @@
             } else {
                 document.getElementById('result-content').innerHTML = '<p>Plan generated but content is empty.</p>';
             }
+            if (addons) {
+                addons.innerHTML = '<p class="empty-line">Itinerary and budget will load below this plan.</p>';
+                loadPlanAddons(plan);
+            }
             window.currentPlan = plan;
+        }
+
+        async function loadPlanAddons(plan) {
+            const addons = document.getElementById('plan-addons');
+            if (!addons || !plan || !plan.email_id) return;
+
+            const cityValue = plan.city || plan.destination || '';
+            const planIdValue = plan.id ? `&plan_id=${encodeURIComponent(plan.id)}` : '';
+            const cityValueQuery = cityValue ? `&city=${encodeURIComponent(cityValue)}` : '';
+
+            addons.innerHTML = `
+                <section class="result-card">
+                    <h3>Itinerary</h3>
+                    <p class="section-note">Loading itinerary for this plan...</p>
+                </section>
+                <section class="result-card summary-card">
+                    <h3>Budget</h3>
+                    <p class="section-note">Loading budget for this plan...</p>
+                </section>
+            `;
+
+            try {
+                const [itineraryResponse, budgetResponse] = await Promise.all([
+                    fetch(`/api/v1/itinerary/${encodeURIComponent(plan.email_id)}?${planIdValue}${cityValueQuery}`, {
+                        method: 'POST'
+                    }),
+                    fetch(`/api/v1/budget/${encodeURIComponent(plan.email_id)}?${planIdValue}${cityValueQuery}`, {
+                        method: 'POST'
+                    }),
+                ]);
+
+                const itineraryData = itineraryResponse.ok ? await itineraryResponse.json() : null;
+                const budgetData = budgetResponse.ok ? await budgetResponse.json() : null;
+
+                const itineraryBody = itineraryData?.itinerary || 'No itinerary available for this plan yet.';
+                const budgetBody = budgetData?.budget_plan || 'No budget guidance available for this plan yet.';
+
+                addons.innerHTML = `
+                    <section class="result-card">
+                        <h3>Itinerary</h3>
+                        <div class="plan-addon-content itinerary-intro">${marked.parse(decodeHtmlEntities(String(itineraryBody)))}</div>
+                    </section>
+                    <section class="result-card summary-card">
+                        <h3>Budget</h3>
+                        <div class="plan-addon-content">${marked.parse(decodeHtmlEntities(String(budgetBody)))}</div>
+                    </section>
+                `;
+            } catch (error) {
+                addons.innerHTML = `
+                    <section class="result-card">
+                        <h3>Itinerary</h3>
+                        <p class="warning-note">Unable to load itinerary right now.</p>
+                    </section>
+                    <section class="result-card summary-card">
+                        <h3>Budget</h3>
+                        <p class="warning-note">Unable to load budget right now.</p>
+                    </section>
+                `;
+            }
         }
 
         // Talk More Button
@@ -301,9 +411,14 @@
             sessionStorage.setItem('currentPlanDestination', plan.destination);
 
             // Switch to chatbot tab with animation
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tabs .tab-btn').forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-selected', 'false');
+            });
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelector('[data-tab="chatbot"]').classList.add('active');
+            const chatTabBtn = document.querySelector('[data-tab="chatbot"]');
+            chatTabBtn.classList.add('active');
+            chatTabBtn.setAttribute('aria-selected', 'true');
             document.getElementById('chatbot').classList.add('active');
 
             // Show plan info and load chatbot
@@ -410,13 +525,24 @@
             return text.replace(/[&<>"']/g, m => map[m]);
         }
 
+        function decodeHtmlEntities(text) {
+            const textarea = document.createElement('textarea');
+            textarea.innerHTML = text;
+            return textarea.value;
+        }
+
         // New Plan Button
         document.getElementById('new-plan-btn').addEventListener('click', () => {
             document.getElementById('plan-form').reset();
             document.getElementById('result').classList.add('hidden');
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tabs .tab-btn').forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-selected', 'false');
+            });
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelector('[data-tab="planner"]').classList.add('active');
+            const plannerTabBtn = document.querySelector('[data-tab="planner"]');
+            plannerTabBtn.classList.add('active');
+            plannerTabBtn.setAttribute('aria-selected', 'true');
             document.getElementById('planner').classList.add('active');
         });
 

@@ -35,7 +35,7 @@ async def login(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="login.html",
-        context={"request": request},
+        context={"request": request, "app_name": settings.app_name},
     )
 
 
