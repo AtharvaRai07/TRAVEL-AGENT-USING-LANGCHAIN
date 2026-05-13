@@ -18,7 +18,6 @@ class SupabaseService:
         self.client: Client = create_client(self.supabase_url, self.supabase_key)
 
     def store_travel_plan(self, email_id: str, city: str, travel_details: dict) -> dict:
-        """Store travel plan for user with city. Returns the stored record."""
         try:
             print(f"[DEBUG] Storing plan for email: {email_id}, city: {city}", file=sys.stderr)
 
@@ -36,7 +35,6 @@ class SupabaseService:
             raise Exception(f"Failed to store travel plan: {str(e)}")
 
     def fetch_travel_plan(self, email_id: str, city: str = None) -> Optional[dict]:
-        """Fetch travel plan for user. If city provided, fetch specific plan. Otherwise, fetch most recent."""
         try:
             print(f"[DEBUG] Fetching plan for email: {email_id}, city: {city}", file=sys.stderr)
 
@@ -51,7 +49,6 @@ class SupabaseService:
 
             if response.data and len(response.data) > 0:
                 record = response.data[0]
-                # Extract and flatten travel_details into the response
                 travel_details = record.get("travel_details", {})
                 return {
                     **record,
@@ -63,12 +60,10 @@ class SupabaseService:
             raise Exception(f"Failed to fetch travel plan: {str(e)}")
 
     def plan_exists(self, email_id: str, city: str = None) -> bool:
-        """Check if travel plan exists for user."""
         plan = self.fetch_travel_plan(email_id, city)
         return plan is not None
 
     def fetch_all_plans(self, email_id: str) -> list[dict]:
-        """Fetch all travel plans for a user. Orders by most recent first."""
         try:
             print(f"[DEBUG] Fetching all plans for email: {email_id}", file=sys.stderr)
 
@@ -92,7 +87,6 @@ class SupabaseService:
             raise Exception(f"Failed to fetch all plans: {str(e)}")
 
     def fetch_plan_by_id(self, email_id: str, plan_id: int) -> Optional[dict]:
-        """Fetch one specific saved plan by id, scoped to the user email."""
         try:
             print(f"[DEBUG] Fetching plan by id: email={email_id}, plan_id={plan_id}", file=sys.stderr)
 

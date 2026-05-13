@@ -33,7 +33,7 @@
     </header>
 
     <div class="dashboard-container">
-        <!-- Sidebar for Past Plans -->
+        
         <aside class="sidebar">
             <div class="sidebar-inner">
                 <div class="sidebar-header">
@@ -50,7 +50,7 @@
             </div>
         </aside>
 
-        <!-- Main Content -->
+        
         <main class="main-content">
             <div class="main-inner">
                 <header class="main-hero">
@@ -68,7 +68,7 @@
                             data-tab="chatbot">Travel chatbot</button>
                     </div>
 
-                <!-- Travel Planner Tab -->
+                
                 <div id="planner" class="tab-content active" role="tabpanel">
                     <section class="panel form-panel panel-elevated">
                         <div class="panel-head">
@@ -127,7 +127,7 @@
                     </section>
                 </div>
 
-                <!-- Chatbot Tab -->
+                
                 <div id="chatbot" class="tab-content" role="tabpanel">
                     <section class="panel form-panel panel-elevated">
                         <div class="panel-head">
@@ -161,7 +161,6 @@
     </div>
 
     <script>
-        // Session Management
         const userEmail = sessionStorage.getItem('userEmail');
         const userName = sessionStorage.getItem('userName') || 'Traveler';
 
@@ -176,7 +175,6 @@
             window.location.href = '/';
         });
 
-        // Tab switching
         document.querySelectorAll('.tabs .tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const target = e.currentTarget;
@@ -191,7 +189,6 @@
             });
         });
 
-        // Load past plans
         async function loadPastPlans() {
             try {
                 const response = await fetch(`/api/v1/plans/${encodeURIComponent(userEmail)}`);
@@ -230,7 +227,6 @@
         }
 
         async function selectPlan(planId) {
-            // Highlight selected plan
             document.querySelectorAll('.plan-item').forEach(p => p.classList.remove('active'));
             const selected = document.querySelector(`[data-plan-id="${planId}"]`);
             if (selected) selected.classList.add('active');
@@ -245,7 +241,6 @@
                         const errorData = await response.json();
                         detail = errorData.detail || detail;
                     } catch (_) {
-                        // ignore parse failure and keep fallback message
                     }
                     alert(detail);
                     return;
@@ -258,7 +253,6 @@
             }
         }
 
-        // Travel Planner Form
         document.getElementById('plan-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const form = e.target;
@@ -309,7 +303,6 @@
 
         function displayPlan(plan) {
             document.getElementById('result').classList.remove('hidden');
-            // Extract dates from the plan response (they might be in itinerary or another field)
             const checkIn = plan.check_in || 'Date';
             const checkOut = plan.check_out || 'Date';
             const warningLine = plan.warning ? `<p class="warning">${escapeHtml(plan.warning)}</p>` : '';
@@ -317,20 +310,15 @@
                 <p><strong>${plan.destination}</strong> • ${checkIn} to ${checkOut}</p>
                 ${warningLine}
             `;
-            // Use final_response field for the plan content
             const rawContent = plan.final_response || 'No plan content available';
             const content = decodeHtmlEntities(String(rawContent)).trim();
             const addons = document.getElementById('plan-addons');
             if (content && content.length > 0) {
-                // Render real HTML directly, but also support escaped HTML stored in the DB.
                 if (/<[a-z][\s\S]*>/i.test(content)) {
-                    // Content is already HTML, render it directly
                     document.getElementById('result-content').innerHTML = content;
                 } else if (window.marked && typeof window.marked.parse === 'function') {
-                    // Markdown renderer is available, use it for rich formatting
                     document.getElementById('result-content').innerHTML = marked.parse(content);
                 } else {
-                    // Fallback when the markdown library is unavailable
                     document.getElementById('result-content').innerHTML = `<pre>${escapeHtml(content)}</pre>`;
                 }
             } else {
@@ -402,15 +390,12 @@
             }
         }
 
-        // Talk More Button
         document.getElementById('talk-more-btn').addEventListener('click', () => {
             const plan = window.currentPlan;
             if (!plan) return;
 
-            // Store current plan in session
             sessionStorage.setItem('currentPlanDestination', plan.destination);
 
-            // Switch to chatbot tab with animation
             document.querySelectorAll('.tabs .tab-btn').forEach(b => {
                 b.classList.remove('active');
                 b.setAttribute('aria-selected', 'false');
@@ -421,19 +406,16 @@
             chatTabBtn.setAttribute('aria-selected', 'true');
             document.getElementById('chatbot').classList.add('active');
 
-            // Show plan info and load chatbot
             const planInfo = document.getElementById('selected-plan-info');
             const planInfoText = document.getElementById('plan-info-text');
             planInfoText.textContent = `Chatting about ${plan.destination}`;
             planInfo.classList.remove('hidden');
 
-            // Auto-load plan for chatbot
             setTimeout(() => {
                 initiateChatbot(plan);
             }, 300);
         });
 
-        // Chatbot functionality
         let currentUserEmail = null;
         let currentChatPlan = null;
 
@@ -444,7 +426,6 @@
             document.getElementById('chatbot-container').classList.remove('hidden');
             document.getElementById('chatbot-status').classList.add('hidden');
 
-            // Add welcome message
             addMessageToChat('bot', `Hello! 👋 I'm here to help you with your ${plan.destination} trip. Ask me anything about hotels, restaurants, attractions, budget optimization, or your itinerary!`);
 
             document.getElementById('chat-input').focus();
@@ -531,7 +512,6 @@
             return textarea.value;
         }
 
-        // New Plan Button
         document.getElementById('new-plan-btn').addEventListener('click', () => {
             document.getElementById('plan-form').reset();
             document.getElementById('result').classList.add('hidden');
@@ -546,7 +526,6 @@
             document.getElementById('planner').classList.add('active');
         });
 
-        // Initialize
         loadPastPlans();
     </script>
 </body>

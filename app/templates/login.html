@@ -230,7 +230,7 @@
             <button class="tab-btn" data-tab="signup">Sign Up</button>
         </div>
 
-        <!-- Sign In Form -->
+        
         <form id="signin-form" class="auth-form active">
             <div class="error" id="signin-error"></div>
             <div class="form-group">
@@ -242,7 +242,7 @@
             </div>
         </form>
 
-        <!-- Sign Up Form -->
+        
         <form id="signup-form" class="auth-form">
             <div class="error" id="signup-error"></div>
             <div class="form-group">
@@ -260,7 +260,6 @@
     </div>
 
     <script>
-        // Tab switching
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -270,7 +269,6 @@
             });
         });
 
-        // Sign In
         document.getElementById('signin-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('signin-email').value;
@@ -281,11 +279,9 @@
             errorDiv.classList.remove('show');
 
             try {
-                // Store email in sessionStorage
                 sessionStorage.setItem('userEmail', email);
                 sessionStorage.setItem('isLoggedIn', 'true');
 
-                // Redirect to dashboard
                 window.location.href = '/dashboard';
             } catch (error) {
                 errorDiv.textContent = 'Error: ' + error.message;
@@ -295,7 +291,6 @@
             }
         });
 
-        // Sign Up
         document.getElementById('signup-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('signup-email').value;
@@ -307,12 +302,10 @@
             errorDiv.classList.remove('show');
 
             try {
-                // Store email in sessionStorage
                 sessionStorage.setItem('userEmail', email);
                 sessionStorage.setItem('userName', name || 'Traveler');
                 sessionStorage.setItem('isLoggedIn', 'true');
 
-                // Redirect to dashboard
                 window.location.href = '/dashboard';
             } catch (error) {
                 errorDiv.textContent = 'Error: ' + error.message;
@@ -322,7 +315,6 @@
             }
         });
 
-        // Check if already logged in
         if (sessionStorage.getItem('isLoggedIn') === 'true') {
             window.location.href = '/dashboard';
         }

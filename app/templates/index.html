@@ -7,7 +7,7 @@
         <button class="tab-btn" data-tab="chatbot">Travel Chatbot</button>
     </div>
 
-    <!-- Travel Planner Tab -->
+    
     <div id="planner" class="tab-content active">
         <section class="panel form-panel">
             <h2>Create Premium Plan</h2>
@@ -60,7 +60,7 @@
         </section>
     </div>
 
-    <!-- Chatbot Tab -->
+    
     <div id="chatbot" class="tab-content">
         <section class="panel form-panel">
             <h2>Travel Chatbot</h2>
@@ -89,7 +89,6 @@
 </div>
 
 <script>
-    // Tab switching
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -99,7 +98,6 @@
         });
     });
 
-    // Chat functionality
     let currentUserEmail = null;
 
     document.getElementById('load-plan-btn').addEventListener('click', async () => {
@@ -129,7 +127,6 @@
         const message = input.value.trim();
         if (!message || !currentUserEmail) return;
 
-        // Add user message to UI
         addMessageToChat('user', message);
         input.value = '';
 
@@ -177,10 +174,8 @@
         msgEl.className = `chat-message ${sender}`;
 
         if (sender === 'bot') {
-            // Render markdown for bot messages
             msgEl.innerHTML = `<div class="markdown-content">${marked.parse(text)}</div>`;
         } else {
-            // Plain text for user messages (security)
             msgEl.innerHTML = `<p>${escapeHtml(text)}</p>`;
         }
 
@@ -196,7 +191,6 @@
     }
 
     function loadChatHistory() {
-        // Clear messages on load
         document.getElementById('chat-messages').innerHTML = '';
     }
 

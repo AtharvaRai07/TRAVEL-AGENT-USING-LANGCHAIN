@@ -77,7 +77,6 @@ body.dashboard-page {
     z-index: 1;
 }
 
-/* Dashboard Layout */
 .dashboard-header {
     background: rgba(255, 255, 255, 0.72);
     backdrop-filter: blur(16px);
@@ -1428,7 +1427,6 @@ button:hover {
     font-weight: 550;
 }
 
-/* Tabs */
 .tabs-container {
     width: 100%;
 }
@@ -1483,7 +1481,6 @@ button:hover {
     animation: reveal-up 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Chat UI */
 .chat-messages {
     height: min(440px, 52vh);
     overflow-y: auto;

@@ -1,5 +1,3 @@
-"""Weather narration agent using Groq + LangChain."""
-
 import os
 
 from langchain_groq import ChatGroq
@@ -8,8 +6,6 @@ from langchain_core.output_parsers import StrOutputParser
 
 
 class WeatherAgent:
-    """Turn structured weather facts into a human-sounding trip brief."""
-
     def __init__(self) -> None:
         self.llm = ChatGroq(
             model="openai/gpt-oss-120b",

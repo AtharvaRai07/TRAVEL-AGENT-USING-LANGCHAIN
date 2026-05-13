@@ -1,5 +1,3 @@
-"""Itinerary planning agent using LangChain and LLM."""
-
 import os
 from datetime import date
 
@@ -12,8 +10,6 @@ from app.schemas.travel import PlanRequest
 
 
 class ItineraryAgent:
-    """Agent for generating personalized travel itineraries."""
-
     def __init__(self) -> None:
         self.llm = ChatGroq(
             model="openai/gpt-oss-120b",
@@ -87,7 +83,6 @@ Keep the writing concise and legible. Do not use long paragraphs or bullet lists
         restaurants: str,
         attractions: str,
     ) -> str:
-        """Generate an itinerary based on travel request and gathered information."""
         try:
             result = await self.chain.ainvoke({
                 "city": req.city,

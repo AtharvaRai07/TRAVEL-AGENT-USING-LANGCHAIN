@@ -7,7 +7,6 @@ from app.services.planner import PlannerService
 router = APIRouter(prefix="/api/v1", tags=["travel"])
 planner_service = PlannerService()
 
-# Lazy initialization for services that need env vars
 supabase_service = None
 chatbot_service = None
 
@@ -40,11 +39,9 @@ async def create_plan(payload: PlanRequest) -> PlanResponse:
 
     plan = await planner_service.generate(payload)
 
-    # Add check_in and check_out to the response
     plan.check_in = str(payload.check_in)
     plan.check_out = str(payload.check_out)
 
-    # Store in Supabase
     try:
         supabase = get_supabase_service()
         plan_data = plan.model_dump()
@@ -73,7 +70,6 @@ async def create_plan(payload: PlanRequest) -> PlanResponse:
 
 @router.get("/plans/{email_id}")
 async def get_user_plans(email_id: str) -> dict:
-    """Get all travel plans for a user."""
     try:
         supabase = get_supabase_service()
         plans = supabase.fetch_all_plans(email_id)
@@ -85,7 +81,6 @@ async def get_user_plans(email_id: str) -> dict:
 
 @router.get("/plans/{email_id}/{plan_id}")
 async def get_plan_details(email_id: str, plan_id: int) -> dict:
-    """Get full details for one saved plan."""
     try:
         supabase = get_supabase_service()
         plan = supabase.fetch_plan_by_id(email_id, plan_id)
@@ -101,7 +96,6 @@ async def get_plan_details(email_id: str, plan_id: int) -> dict:
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat(payload: ChatRequest) -> ChatResponse:
-    """Chat endpoint for travel questions."""
     try:
         supabase = get_supabase_service()
         chatbot = get_chatbot_service()
@@ -109,7 +103,6 @@ async def chat(payload: ChatRequest) -> ChatResponse:
         print(f"[ERROR] Service init failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Service initialization failed: {str(e)}")
 
-    # Fetch user's travel plan
     try:
         travel_plan = supabase.fetch_travel_plan(payload.email_id)
     except Exception as e:
@@ -122,7 +115,6 @@ async def chat(payload: ChatRequest) -> ChatResponse:
             detail="No travel plan found for this email. Please create a plan first."
         )
 
-    # Get bot response
     try:
         print(f"[DEBUG] Calling chatbot for email: {payload.email_id}")
         bot_response = await chatbot.chat(
@@ -144,7 +136,6 @@ async def chat(payload: ChatRequest) -> ChatResponse:
 
 @router.get("/chat/history/{email_id}")
 async def get_chat_history(email_id: str) -> dict:
-    """Get chat history for a user."""
     try:
         chatbot = get_chatbot_service()
     except Exception as e:
@@ -159,7 +150,6 @@ async def get_chat_history(email_id: str) -> dict:
 
 @router.post("/chat/clear/{email_id}")
 async def clear_chat_history(email_id: str) -> dict:
-    """Clear chat history for a user."""
     try:
         chatbot = get_chatbot_service()
     except Exception as e:
@@ -171,7 +161,6 @@ async def clear_chat_history(email_id: str) -> dict:
 
 @router.post("/itinerary/{email_id}")
 async def generate_itinerary(email_id: str, city: str = None) -> dict:
-    """Generate a detailed itinerary for a user's travel plan."""
     try:
         supabase = get_supabase_service()
         from app.services.itinerary_agent import ItineraryAgent
@@ -185,7 +174,6 @@ async def generate_itinerary(email_id: str, city: str = None) -> dict:
                 detail="No travel plan found. Please create a plan first."
             )
 
-        # Parse dates safely
         check_in_str = travel_plan.get("check_in", "")
         check_out_str = travel_plan.get("check_out", "")
 
@@ -196,7 +184,6 @@ async def generate_itinerary(email_id: str, city: str = None) -> dict:
             check_in_date = datetime.utcnow().date()
             check_out_date = datetime.utcnow().date()
 
-        # Convert stored plan back to PlanRequest for agent
         plan_req = PlanRequest(
             email_id=email_id,
             city=travel_plan.get("destination", travel_plan.get("city", "")),
@@ -233,7 +220,6 @@ async def generate_itinerary(email_id: str, city: str = None) -> dict:
 
 @router.post("/budget/{email_id}")
 async def generate_budget(email_id: str, city: str = None) -> dict:
-    """Generate budget optimization for a user's travel plan."""
     try:
         supabase = get_supabase_service()
         from app.services.budget_agent import BudgetAgent
@@ -247,7 +233,6 @@ async def generate_budget(email_id: str, city: str = None) -> dict:
                 detail="No travel plan found. Please create a plan first."
             )
 
-        # Parse dates safely
         check_in_str = travel_plan.get("check_in", "")
         check_out_str = travel_plan.get("check_out", "")
 
@@ -258,7 +243,6 @@ async def generate_budget(email_id: str, city: str = None) -> dict:
             check_in_date = datetime.utcnow().date()
             check_out_date = datetime.utcnow().date()
 
-        # Convert stored plan back to PlanRequest for agent
         plan_req = PlanRequest(
             email_id=email_id,
             city=travel_plan.get("destination", travel_plan.get("city", "")),

@@ -9,7 +9,6 @@ from fastapi.templating import Jinja2Templates
 from app.api.routes import router
 from app.core.config import settings
 
-# Load environment variables
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -17,10 +16,9 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 app = FastAPI(title=settings.app_name, debug=settings.debug)
 
-# Add CORS middleware for production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins (safe for public APIs)
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

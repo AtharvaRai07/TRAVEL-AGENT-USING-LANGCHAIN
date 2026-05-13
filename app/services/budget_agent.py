@@ -1,5 +1,3 @@
-"""Budget optimization agent using LangChain and LLM."""
-
 import os
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
@@ -10,8 +8,6 @@ from app.schemas.travel import PlanRequest
 
 
 class BudgetAgent:
-    """Agent for generating budget-conscious travel plans."""
-
     def __init__(self) -> None:
         self.llm = ChatGroq(
             model="openai/gpt-oss-120b",
@@ -90,7 +86,6 @@ If you run out of space, prioritize completing tables 2–7 with full rows over 
         restaurants: str,
         attractions: str,
     ) -> str:
-        """Generate a budget plan based on travel request and gathered information."""
         try:
             result = await self.chain.ainvoke({
                 "city": req.city,
