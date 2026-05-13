@@ -25,8 +25,6 @@ class PlanResponse(BaseModel):
     restaurants: str
     attractions: str
     currency: str
-    itinerary: str
-    budget_optimizer: str
     final_response: str
     generated_at: str
     warning: Optional[str] = None

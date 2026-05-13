@@ -375,6 +375,14 @@ button:hover {
     animation: reveal-up .5s ease both;
 }
 
+.result-summary {
+    margin: 10px 0 0;
+    max-width: 760px;
+    color: var(--muted);
+    line-height: 1.68;
+    font-size: 1rem;
+}
+
 .result-hero {
     border: 1px solid var(--line);
     border-radius: 18px;
@@ -457,6 +465,15 @@ button:hover {
 .result-card p {
     margin: 0 0 8px;
     line-height: 1.64;
+}
+
+.weather-prose p {
+    margin-bottom: 12px;
+    font-size: 1.02rem;
+}
+
+.weather-prose p:last-child {
+    margin-bottom: 0;
 }
 
 .budget-intro {
@@ -558,6 +575,13 @@ button:hover {
     background: linear-gradient(160deg, #fffdf9 0%, #f4ebdf 100%);
 }
 
+.summary-card .budget-intro {
+    margin: 0;
+    color: #2f4353;
+    font-size: 0.98rem;
+    line-height: 1.7;
+}
+
 .summary-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -569,6 +593,10 @@ button:hover {
     border-radius: 12px;
     background: #fffcf7;
     padding: 10px 12px;
+}
+
+.summary-item .summary-text {
+    font-size: 0.95rem;
 }
 
 .summary-item-wide {
@@ -595,6 +623,10 @@ button:hover {
     padding-left: 16px;
     display: grid;
     gap: 4px;
+}
+
+.result-card.two-col .summary-grid {
+    grid-template-columns: 1fr;
 }
 
 .summary-tier-row {

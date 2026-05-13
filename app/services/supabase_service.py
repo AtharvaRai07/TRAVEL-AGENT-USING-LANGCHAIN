@@ -17,47 +17,54 @@ class SupabaseService:
 
         self.client: Client = create_client(self.supabase_url, self.supabase_key)
 
-    def store_travel_plan(self, email_id: str, travel_details: dict) -> dict:
-        """Store travel plan for user. Returns the stored record. Creates new record each time (not upsert)."""
+    def store_travel_plan(self, email_id: str, city: str, travel_details: dict) -> dict:
+        """Store travel plan for user with city. Returns the stored record."""
         try:
-            print(f"[DEBUG] Storing plan for email: {email_id}", file=sys.stderr)
-            print(f"[DEBUG] Supabase URL: {self.supabase_url}", file=sys.stderr)
+            print(f"[DEBUG] Storing plan for email: {email_id}, city: {city}", file=sys.stderr)
 
-            # Use insert() instead of upsert() so each plan is a new row, not an update
             response = self.client.table(self.table_name).insert({
                 "email_id": email_id,
+                "city": city,
                 "travel_details": travel_details
             }).execute()
 
             print(f"[DEBUG] Insert response: {response}", file=sys.stderr)
-            print(f"[DEBUG] Response data: {response.data}", file=sys.stderr)
 
             return response.data[0] if response.data else {}
         except Exception as e:
             print(f"[ERROR] Failed to store travel plan: {str(e)}", file=sys.stderr)
-            print(f"[ERROR] Exception type: {type(e)}", file=sys.stderr)
             raise Exception(f"Failed to store travel plan: {str(e)}")
 
-    def fetch_travel_plan(self, email_id: str) -> Optional[dict]:
-        """Fetch the most recent travel plan for user by email_id."""
+    def fetch_travel_plan(self, email_id: str, city: str = None) -> Optional[dict]:
+        """Fetch travel plan for user. If city provided, fetch specific plan. Otherwise, fetch most recent."""
         try:
-            print(f"[DEBUG] Fetching plan for email: {email_id}", file=sys.stderr)
+            print(f"[DEBUG] Fetching plan for email: {email_id}, city: {city}", file=sys.stderr)
 
-            # Order by id DESC to get the most recent plan (id increases with each insert)
-            response = self.client.table(self.table_name).select("*").eq("email_id", email_id).order("id", desc=True).limit(1).execute()
+            query = self.client.table(self.table_name).select("*").eq("email_id", email_id)
+
+            if city:
+                query = query.eq("city", city)
+
+            response = query.order("id", desc=True).limit(1).execute()
 
             print(f"[DEBUG] Fetch response: {response}", file=sys.stderr)
 
             if response.data and len(response.data) > 0:
-                return response.data[0]
+                record = response.data[0]
+                # Extract and flatten travel_details into the response
+                travel_details = record.get("travel_details", {})
+                return {
+                    **record,
+                    **travel_details
+                }
             return None
         except Exception as e:
             print(f"[ERROR] Failed to fetch travel plan: {str(e)}", file=sys.stderr)
             raise Exception(f"Failed to fetch travel plan: {str(e)}")
 
-    def plan_exists(self, email_id: str) -> bool:
+    def plan_exists(self, email_id: str, city: str = None) -> bool:
         """Check if travel plan exists for user."""
-        plan = self.fetch_travel_plan(email_id)
+        plan = self.fetch_travel_plan(email_id, city)
         return plan is not None
 
     def fetch_all_plans(self, email_id: str) -> list[dict]:
@@ -68,12 +75,12 @@ class SupabaseService:
             response = self.client.table(self.table_name).select("*").eq("email_id", email_id).order("id", desc=True).execute()
 
             if response.data:
-                # Extract destination and dates from travel_details for each plan
                 plans = []
                 for record in response.data:
                     details = record.get("travel_details", {})
                     plans.append({
                         "id": record.get("id"),
+                        "city": record.get("city", details.get("destination", "Unknown")),
                         "destination": details.get("destination", "Unknown"),
                         "check_in": details.get("check_in", ""),
                         "check_out": details.get("check_out", "")
@@ -83,3 +90,30 @@ class SupabaseService:
         except Exception as e:
             print(f"[ERROR] Failed to fetch all plans: {str(e)}", file=sys.stderr)
             raise Exception(f"Failed to fetch all plans: {str(e)}")
+
+    def fetch_plan_by_id(self, email_id: str, plan_id: int) -> Optional[dict]:
+        """Fetch one specific saved plan by id, scoped to the user email."""
+        try:
+            print(f"[DEBUG] Fetching plan by id: email={email_id}, plan_id={plan_id}", file=sys.stderr)
+
+            response = (
+                self.client
+                .table(self.table_name)
+                .select("*")
+                .eq("email_id", email_id)
+                .eq("id", plan_id)
+                .limit(1)
+                .execute()
+            )
+
+            if response.data and len(response.data) > 0:
+                record = response.data[0]
+                travel_details = record.get("travel_details", {})
+                return {
+                    **record,
+                    **travel_details,
+                }
+            return None
+        except Exception as e:
+            print(f"[ERROR] Failed to fetch plan by id: {str(e)}", file=sys.stderr)
+            raise Exception(f"Failed to fetch plan by id: {str(e)}")

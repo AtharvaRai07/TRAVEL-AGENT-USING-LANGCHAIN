@@ -30,8 +30,7 @@ class TravelChatbot:
         hotels = travel_details.get("hotels", "")
         restaurants = travel_details.get("restaurants", "")
         attractions = travel_details.get("attractions", "")
-        itinerary = travel_details.get("itinerary", "")
-        budget_optimizer = travel_details.get("budget_optimizer", "")
+        currency = travel_details.get("currency", "")
 
         return f"""You are a helpful travel assistant for the user's trip to {destination}.
 You have access to the following travel plan details and can answer any questions about their trip.
@@ -50,16 +49,17 @@ Restaurants:
 Attractions:
 {attractions}
 
-Itinerary:
-{itinerary}
-
-Budget Options:
-{budget_optimizer}
+Currency & Budget:
+{currency}
 ---
 
 Based on this information, answer the user's travel questions helpfully and conversationally.
-If they ask about something not in the plan, use your general travel knowledge but always reference their specific plan when relevant.
-Be friendly, concise, and practical."""
+You can also help them with:
+- Creating detailed day-by-day itineraries
+- Optimizing their budget across different spending levels
+- Practical travel tips and recommendations
+
+Be friendly, concise, and practical. When they ask for itinerary or budget planning, provide detailed recommendations."""
 
     async def chat(self, email_id: str, message: str, travel_details: dict) -> str:
         """Send a message and get response. Maintains session history."""

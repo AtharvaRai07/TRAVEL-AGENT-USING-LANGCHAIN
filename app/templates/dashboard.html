@@ -171,23 +171,46 @@
                 return;
             }
             plansList.innerHTML = plans.map(plan => `
-                <div class="plan-item" data-destination="${plan.destination}">
-                    <h4>${plan.destination}</h4>
+                <div class="plan-item" data-plan-id="${plan.id}">
+                    <h4>${plan.city || plan.destination}</h4>
                     <p class="plan-dates">${new Date(plan.check_in).toLocaleDateString()} - ${new Date(plan.check_out).toLocaleDateString()}</p>
                 </div>
             `).join('');
 
             document.querySelectorAll('.plan-item').forEach(item => {
                 item.addEventListener('click', () => {
-                    selectPlan(item.dataset.destination);
+                    selectPlan(item.dataset.planId);
                 });
             });
         }
 
-        function selectPlan(destination) {
+        async function selectPlan(planId) {
             // Highlight selected plan
             document.querySelectorAll('.plan-item').forEach(p => p.classList.remove('active'));
-            document.querySelector(`[data-destination="${destination}"]`).classList.add('active');
+            const selected = document.querySelector(`[data-plan-id="${planId}"]`);
+            if (selected) selected.classList.add('active');
+
+            if (!planId) return;
+
+            try {
+                const response = await fetch(`/api/v1/plans/${encodeURIComponent(userEmail)}/${encodeURIComponent(planId)}`);
+                if (!response.ok) {
+                    let detail = 'Unable to load selected plan';
+                    try {
+                        const errorData = await response.json();
+                        detail = errorData.detail || detail;
+                    } catch (_) {
+                        // ignore parse failure and keep fallback message
+                    }
+                    alert(detail);
+                    return;
+                }
+
+                const plan = await response.json();
+                displayPlan(plan);
+            } catch (error) {
+                alert('Error loading plan: ' + error.message);
+            }
         }
 
         // Travel Planner Form
@@ -222,7 +245,14 @@
                     displayPlan(plan);
                     loadPastPlans();
                 } else {
-                    alert('Error generating plan');
+                    let detail = 'Unknown error';
+                    try {
+                        const errorData = await response.json();
+                        detail = errorData.detail || JSON.stringify(errorData);
+                    } catch (_) {
+                        detail = await response.text();
+                    }
+                    alert(`Error generating plan: ${detail}`);
                 }
             } catch (error) {
                 alert('Error: ' + error.message);
@@ -237,8 +267,10 @@
             // Extract dates from the plan response (they might be in itinerary or another field)
             const checkIn = plan.check_in || 'Date';
             const checkOut = plan.check_out || 'Date';
+            const warningLine = plan.warning ? `<p class="warning">${escapeHtml(plan.warning)}</p>` : '';
             document.getElementById('result-meta').innerHTML = `
                 <p><strong>${plan.destination}</strong> • ${checkIn} to ${checkOut}</p>
+                ${warningLine}
             `;
             // Use final_response field for the plan content
             const content = plan.final_response || 'No plan content available';
@@ -247,9 +279,12 @@
                 if (content.trim().startsWith('<')) {
                     // Content is already HTML, render it directly
                     document.getElementById('result-content').innerHTML = content;
-                } else {
-                    // Content is markdown, parse it
+                } else if (window.marked && typeof window.marked.parse === 'function') {
+                    // Markdown renderer is available, use it for rich formatting
                     document.getElementById('result-content').innerHTML = marked.parse(content);
+                } else {
+                    // Fallback when the markdown library is unavailable
+                    document.getElementById('result-content').innerHTML = `<pre>${escapeHtml(content)}</pre>`;
                 }
             } else {
                 document.getElementById('result-content').innerHTML = '<p>Plan generated but content is empty.</p>';

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import difflib
 from html import escape
 from datetime import date, datetime, timedelta
 from typing import Any
@@ -8,12 +9,14 @@ from typing import Any
 import httpx
 
 from app.schemas.travel import PlanRequest, PlanResponse
+from app.services.weather_agent import WeatherAgent
 
 
 class PlannerService:
     def __init__(self) -> None:
         self.rapidapi_key = os.getenv("RAPIDAPI_KEY", "")
-        self.foursquare_key = os.getenv("FOURSQUARE_API_KEY", "")
+        self.opentrip_key = os.getenv("OPENTRIP_API_KEY", "")
+        self.weather_agent = WeatherAgent()
 
     async def generate(self, req: PlanRequest) -> PlanResponse:
         weather = await self._weather_brief(req.city, req.check_in)
@@ -25,8 +28,6 @@ class PlannerService:
         hotels = self._hotel_brief(req.city, hotels_data)
         restaurants = self._restaurant_brief(req.city, restaurants_data)
         attractions = self._attraction_brief(req.city, attractions_data)
-        budget_optimizer = self._budget_optimizer(req, hotels_data, restaurants_data, attractions_data)
-        itinerary = self._itinerary(req, weather, hotels, restaurants, attractions, budget_optimizer)
 
         final_response = self._compose_final(
             city=req.city,
@@ -35,8 +36,6 @@ class PlannerService:
             restaurants=restaurants,
             attractions=attractions,
             currency=currency_data,
-            itinerary=itinerary,
-            budget_optimizer=budget_optimizer,
         )
 
         return PlanResponse(
@@ -47,11 +46,9 @@ class PlannerService:
             restaurants=restaurants,
             attractions=attractions,
             currency=currency_data,
-            itinerary=itinerary,
-            budget_optimizer=budget_optimizer,
             final_response=final_response,
             generated_at=datetime.utcnow().isoformat(),
-        )
+)
 
     async def _weather_brief(self, city: str, target_date: date) -> str:
         coords = await self._geocode(city)
@@ -62,43 +59,42 @@ class PlannerService:
         current = await self._current_weather(lat, lon)
         expected = await self._historical_expectation(lat, lon, target_date)
 
-        if not expected:
-            if current:
-                return (
-                    f"For {resolved_name} around {target_date.isoformat()}, seasonal archive data was unavailable, "
-                    "so this outlook is based on current conditions only.\n"
-                    f"Right now it feels {current['comfort_phrase']}, around {self._format_temp(current['temp_c'])}, "
-                    f"with humidity near {current['humidity_pct']:.0f}%."
-                )
-            return "Weather forecast data is currently unavailable for this destination."
-
-        day_band = self._temperature_band(expected["avg_max_c"])
-        rain_phrase = self._rain_phrase(expected["avg_rain_mm"])
-        packing_tip = self._packing_tip(expected["avg_min_c"], expected["avg_max_c"], expected["avg_rain_mm"])
-
-        lines = [
-            (
-                f"If you visit {resolved_name} around {target_date.isoformat()}, expect mostly {day_band} weather. "
-                f"Typical daytime feels around {self._format_temp(expected['avg_max_c'])}, "
-                f"and early mornings or evenings can drop to about {self._format_temp(expected['avg_min_c'])}."
-            ),
-            f"Rain outlook: {rain_phrase} (about {expected['avg_rain_mm']:.1f} mm/day in seasonal averages).",
-            f"How to dress: {packing_tip}",
-        ]
-
+        current_snapshot = "Current weather snapshot: unavailable."
         if current:
-            lines.append(
-                (
-                    f"Current snapshot: {self._format_temp(current['temp_c'])} with humidity near "
-                    f"{current['humidity_pct']:.0f}% ({current['comfort_phrase']})."
-                )
+            current_snapshot = (
+                f"Temperature: {self._format_temp(current['temp_c'])}. "
+                f"Humidity: {current['humidity_pct']:.0f}%. "
+                f"Comfort level: {current['comfort_phrase']}."
             )
 
-        return "\n".join(lines)
+        seasonal_snapshot = "Seasonal weather snapshot: unavailable."
+        if expected:
+            seasonal_snapshot = (
+                f"Typical daytime high: {self._format_temp(expected['avg_max_c'])}. "
+                f"Typical night/early morning low: {self._format_temp(expected['avg_min_c'])}. "
+                f"Rain outlook: {self._rain_phrase(expected['avg_rain_mm'])}. "
+                f"Average rainfall: {expected['avg_rain_mm']:.1f} mm/day."
+            )
+
+        if current and expected:
+            return await self.weather_agent.generate(
+                city=city,
+                target_date=target_date.isoformat(),
+                resolved_name=resolved_name,
+                current_snapshot=current_snapshot,
+                seasonal_snapshot=seasonal_snapshot,
+            )
+        return await self.weather_agent.generate(
+            city=city,
+            target_date=target_date.isoformat(),
+            resolved_name=resolved_name,
+            current_snapshot=current_snapshot,
+            seasonal_snapshot=seasonal_snapshot,
+        )
 
     async def _geocode(self, city: str) -> tuple[float, float, str] | None:
         url = "https://geocoding-api.open-meteo.com/v1/search"
-        params = {"name": city, "count": 1, "language": "en", "format": "json"}
+        params = {"name": city, "count": 10, "language": "en", "format": "json"}
 
         try:
             async with httpx.AsyncClient(timeout=20) as client:
@@ -107,7 +103,29 @@ class PlannerService:
             results = data.get("results", [])
             if not results:
                 return None
-            top = results[0]
+            wanted = city.strip().lower()
+
+            def score(result: dict[str, Any]) -> float:
+                name = str(result.get("name", "")).lower()
+                admin = str(result.get("admin1", "")).lower()
+                country = str(result.get("country", "")).lower()
+                value = 0.0
+
+                if name == wanted:
+                    value += 100.0
+                if name.startswith(wanted):
+                    value += 40.0
+                if wanted in name:
+                    value += 20.0
+                value += difflib.SequenceMatcher(None, wanted, name).ratio() * 10.0
+
+                tokens = [token for token in wanted.split() if len(token) > 2]
+                if any(token in admin or token in country for token in tokens):
+                    value += 5.0
+
+                return value
+
+            top = max(results, key=score)
             return float(top["latitude"]), float(top["longitude"]), top.get("name", city)
         except Exception:
             return None
@@ -141,27 +159,43 @@ class PlannerService:
         except Exception:
             return None
 
-    async def _historical_expectation(self, lat: float, lon: float, target_date: date) -> dict[str, float] | None:
-        ref = target_date.replace(year=max(target_date.year - 1, 2000))
-        start = ref - timedelta(days=1)
-        end = ref + timedelta(days=1)
+    async def _historical_expectation(
+        self,
+        lat: float,
+        lon: float,
+        target_date: date,
+    ) -> dict[str, float] | None:
+
+        historical_date = date(
+            target_date.year - 1,
+            target_date.month,
+            target_date.day,
+        )
 
         url = "https://archive-api.open-meteo.com/v1/archive"
+
         params = {
             "latitude": lat,
             "longitude": lon,
-            "start_date": start.isoformat(),
-            "end_date": end.isoformat(),
-            "daily": "temperature_2m_max,temperature_2m_min,precipitation_sum",
+            "start_date": historical_date.isoformat(),
+            "end_date": historical_date.isoformat(),
+            "daily": (
+                "temperature_2m_max,"
+                "temperature_2m_min,"
+                "precipitation_sum"
+            ),
             "timezone": "auto",
         }
 
         try:
             async with httpx.AsyncClient(timeout=20) as client:
                 res = await client.get(url, params=params)
+                res.raise_for_status()
+
                 data = res.json()
 
             daily = data.get("daily", {})
+
             tmax = daily.get("temperature_2m_max", [])
             tmin = daily.get("temperature_2m_min", [])
             rain = daily.get("precipitation_sum", [])
@@ -169,16 +203,14 @@ class PlannerService:
             if not tmax or not tmin:
                 return None
 
-            avg_max = sum(tmax) / len(tmax)
-            avg_min = sum(tmin) / len(tmin)
-            avg_rain = (sum(rain) / len(rain)) if rain else 0.0
-
             return {
-                "avg_max_c": float(avg_max),
-                "avg_min_c": float(avg_min),
-                "avg_rain_mm": float(avg_rain),
+                "avg_max_c": float(tmax[0]),
+                "avg_min_c": float(tmin[0]),
+                "avg_rain_mm": float(rain[0]) if rain else 0.0,
             }
-        except Exception:
+
+        except Exception as e:
+            print(e)
             return None
 
     def _format_temp(self, celsius: float) -> str:
@@ -216,7 +248,7 @@ class PlannerService:
         if rain_mm >= 0.5:
             rain = "carry a compact umbrella or a light rain shell"
 
-        return f"{layers}; {rain}."
+        return f"{layers}. Also, {rain}."
 
     def _comfort_phrase(self, temp_c: float, humidity_pct: float) -> str:
         band = self._temperature_band(temp_c)
@@ -260,7 +292,8 @@ class PlannerService:
                     },
                 )
                 return hotel_resp.json().get("data", {}).get("data", [])[:8]
-        except Exception:
+        except Exception as e:
+            print(f"[ERROR] Hotel API failed: {str(e)}")
             return []
 
     async def _fetch_restaurants(self, city: str) -> list[dict[str, Any]]:
@@ -291,50 +324,69 @@ class PlannerService:
                     params={"locationId": location_id},
                 )
                 return rest_resp.json().get("data", {}).get("data", [])[:8]
-        except Exception:
+        except Exception as e:
+            print(f"[ERROR] Restaurant API failed: {str(e)}")
             return []
 
     async def _fetch_attractions(self, city: str) -> list[dict[str, Any]]:
-        if not self.foursquare_key:
+        if not self.opentrip_key:
             return []
 
-        headers = {
-            "Authorization": f"Bearer {self.foursquare_key}",
-            "Accept": "application/json",
-            "X-Places-Api-Version": "2025-06-17",
-        }
-        queries = [
-            "historic monument landmark",
-            "museum art gallery",
-            "cathedral basilica",
-            "palace castle tower",
-        ]
-        seen: set[str] = set()
-        places: list[dict[str, Any]] = []
+        coords = await self._geocode(city)
+        if not coords:
+            return []
+
+        lat, lon, _ = coords
 
         try:
             async with httpx.AsyncClient(timeout=25) as client:
-                for query in queries:
-                    resp = await client.get(
-                        "https://places-api.foursquare.com/places/search",
-                        headers=headers,
-                        params={
-                            "query": query,
-                            "near": city,
-                            "limit": 6,
-                            "sort": "POPULARITY",
-                            "fields": "fsq_place_id,name,categories,location",
-                        },
+                nearby_resp = await client.get(
+                    "https://api.opentripmap.com/0.1/en/places/radius",
+                    params={
+                        "radius": 15000,
+                        "lon": lon,
+                        "lat": lat,
+                        "kinds": "interesting_places,cultural,historic,architecture,natural",
+                        "limit": 16,
+                        "rate": 3,
+                        "format": "json",
+                        "apikey": self.opentrip_key,
+                    },
+                )
+                nearby_resp.raise_for_status()
+                nearby = nearby_resp.json()
+
+                results: list[dict[str, Any]] = []
+                for place in nearby:
+                    xid = place.get("xid")
+                    if not xid:
+                        continue
+
+                    detail_resp = await client.get(
+                        f"https://api.opentripmap.com/0.1/en/places/xid/{xid}",
+                        params={"apikey": self.opentrip_key},
                     )
-                    for place in resp.json().get("results", []):
-                        pid = place.get("fsq_place_id")
-                        if pid and pid not in seen:
-                            seen.add(pid)
-                            places.append(place)
-                    if len(places) >= 10:
+                    if detail_resp.status_code != 200:
+                        continue
+                    detail = detail_resp.json()
+                    if not detail.get("name"):
+                        continue
+
+                    results.append(
+                        {
+                            "name": detail.get("name", ""),
+                            "kinds": detail.get("kinds", ""),
+                            "dist": place.get("dist"),
+                            "address": detail.get("address", {}),
+                        }
+                    )
+
+                    if len(results) >= 8:
                         break
-            return places[:10]
-        except Exception:
+
+                return results
+        except Exception as e:
+            print(f"[ERROR] Attraction API failed: {str(e)}")
             return []
 
     async def _currency_brief(self, base: str, target: str, amount: float) -> str:
@@ -349,114 +401,102 @@ class PlannerService:
             if not rate:
                 return f"Currency conversion unavailable for {base}->{target}."
             converted = amount * float(rate)
-            return f"{amount:.0f} {base} is approximately {converted:.2f} {target} at rate 1 {base} = {rate:.4f} {target}."
+            return (
+                f"At today’s rate, {amount:.0f} {base} is roughly {converted:.2f} {target}. "
+                f"That gives you a comfortable working budget for this trip, depending on how premium you want to go."
+            )
         except Exception:
             return f"Currency conversion unavailable for {base}->{target}."
 
-    def _hotel_brief(self, city: str, hotels: list[dict[str, Any]]) -> str:
-        if not hotels:
-            return f"Hotel APIs returned no direct inventory for {city} in the selected range."
+    def _hotel_brief(
+        self,
+        city: str,
+        hotels: list[dict[str, Any]],
+    ) -> str:
 
-        lines = [f"Hotel intelligence from live search in {city}:"]
+        if not hotels:
+            return f"No live hotel results found for {city}."
+
+        lines: list[str] = []
+
         for idx, hotel in enumerate(hotels[:5], start=1):
             name = hotel.get("title", "Unknown")
-            price = hotel.get("priceForDisplay", "N/A")
             rating = hotel.get("bubbleRating", {}).get("rating", "N/A")
             reviews = hotel.get("bubbleRating", {}).get("count", "N/A")
-            primary_info = hotel.get("primaryInfo") or ""
+            price_level = hotel.get("priceForDisplay", "N/A")
+            address = hotel.get("primaryInfo") or ""
             price_details = hotel.get("priceDetails") or ""
-            lines.append(
-                f"{idx}. {name} | Rating {rating}/5 ({reviews} reviews) | Price {price}"
-                + (f" | {primary_info}" if primary_info else "")
-                + (f" | {price_details}" if price_details else "")
-            )
 
-        lines.append("Neighborhood strategy: prioritize central districts with short commute to core attractions.")
+            sentence = f"{idx}. {name}. Rating: {rating}/5 based on {reviews} reviews. Price: {price_level}."
+            if address:
+                sentence += f" Area: {address}."
+            if price_details:
+                sentence += f" Details: {price_details}."
+            lines.append(sentence)
+
+        lines.append(
+            "Neighborhood strategy: prioritize central districts "
+            "with short commute to core attractions."
+        )
+
         return "\n".join(lines)
 
-    def _restaurant_brief(self, city: str, restaurants: list[dict[str, Any]]) -> str:
-        if not restaurants:
-            return f"Restaurant APIs returned no live rows for {city}."
 
-        lines = [f"Restaurant intelligence from live search in {city}:"]
+    def _restaurant_brief(
+        self,
+        city: str,
+        restaurants: list[dict[str, Any]],
+    ) -> str:
+
+        if not restaurants:
+            return f"No live restaurant results found for {city}."
+
+        lines: list[str] = []
+
         for idx, item in enumerate(restaurants[:6], start=1):
             name = item.get("name", "Unknown")
             rating = item.get("averageRating", "N/A")
-            cuisine = ", ".join(item.get("establishmentTypeAndCuisineTags", [])[:3]) or "N/A"
-            price = item.get("priceTag", "N/A")
-            lines.append(f"{idx}. {name} | Rating {rating}/5 | Cuisine {cuisine} | Price {price}")
+            price_level = item.get("priceTag", "N/A")
+            types = ", ".join(item.get("establishmentTypeAndCuisineTags", [])[:3]) or "N/A"
+
+            lines.append(f"{idx}. {name}. Rating: {rating}/5. Cuisine: {types}. Price level: {price_level}.")
+
         return "\n".join(lines)
 
-    def _attraction_brief(self, city: str, attractions: list[dict[str, Any]]) -> str:
-        if not attractions:
-            return f"Attraction APIs returned no live rows for {city}."
 
-        lines = [f"Attraction intelligence from live search in {city}:"]
-        for idx, place in enumerate(attractions[:8], start=1):
-            name = place.get("name", "Unknown")
-            category = (place.get("categories", [{}])[0].get("name", "Attraction") if place.get("categories") else "Attraction")
-            addr = place.get("location", {}).get("formatted_address", "")
-            lines.append(f"{idx}. {name} | {category}" + (f" | {addr}" if addr else ""))
-        return "\n".join(lines)
-
-    def _itinerary(
+    def _attraction_brief(
         self,
-        req: PlanRequest,
-        weather: str,
-        hotels: str,
-        restaurants: str,
-        attractions: str,
-        budget_optimizer: str,
-    ) -> str:
-        return (
-            f"4-day itinerary for {req.city} ({req.check_in} to {req.check_out}), style={req.style}, adults={req.adults}.\n"
-            "Day 1 Morning: city-core orientation and first landmark cluster.\n"
-            "Day 1 Afternoon: museum/culture block and cafe recovery stop.\n"
-            "Day 1 Evening: signature dining based on top-rated live restaurant rows.\n"
-            "Day 2 Morning: high-demand attractions first (prebooked entries).\n"
-            "Day 2 Afternoon: neighborhood exploration with transit-aware pacing.\n"
-            "Day 2 Evening: scenic promenade plus local culinary focus.\n"
-            "Day 3 Morning: secondary landmark cluster and photo windows.\n"
-            "Day 3 Afternoon: shopping/local experiences depending on style preference.\n"
-            "Day 3 Evening: cultural show/night district option.\n"
-            "Day 4: flexible reserve day for weather shifts, spillover tickets, and premium upgrades.\n\n"
-            f"Weather input used:\n{weather}\n\n"
-            f"Hotel input used:\n{hotels}\n\n"
-            f"Restaurant input used:\n{restaurants}\n\n"
-            f"Attraction input used:\n{attractions}\n\n"
-            f"Budget tier input used:\n{budget_optimizer}"
-        )
-
-    def _budget_optimizer(
-        self,
-        req: PlanRequest,
-        hotels: list[dict[str, Any]],
-        restaurants: list[dict[str, Any]],
+        city: str,
         attractions: list[dict[str, Any]],
     ) -> str:
-        low = req.budget_amount * 0.35
-        medium = req.budget_amount * 0.6
-        luxury = req.budget_amount * 1.0
 
-        return (
-            "Budget optimizer with all tiers (auto-generated, no follow-up needed):\n\n"
-            f"LOW PLAN (~{low:.0f} {req.budget_currency}):\n"
-            "- Stay: value hotels with strong location-to-price ratio from live search.\n"
-            "- Food: 1 signature meal + 2 casual local meals per day.\n"
-            "- Mobility: public transit pass and clustered attraction routing.\n"
-            "- Experiences: prioritize top 2-3 paid attractions, fill rest with low-cost city walks.\n\n"
-            f"MEDIUM PLAN (~{medium:.0f} {req.budget_currency}):\n"
-            "- Stay: boutique/upscale mid-tier properties from live inventory.\n"
-            "- Food: 1 premium dinner daily + curated cafe/lunch circuit.\n"
-            "- Mobility: mixed transit + selective ride-hailing for time-critical slots.\n"
-            "- Experiences: add skip-the-line entries and one premium guided activity.\n\n"
-            f"LUXURY PLAN (~{luxury:.0f} {req.budget_currency}):\n"
-            "- Stay: flagship luxury properties with concierge-grade amenities.\n"
-            "- Food: top-tier tasting-led dining and reservation-priority spots.\n"
-            "- Mobility: private transfers for airport and evening returns.\n"
-            "- Experiences: private/limited-access experiences and premium time optimization.\n\n"
-            f"Live inputs counted: hotels={len(hotels)}, restaurants={len(restaurants)}, attractions={len(attractions)}"
-        )
+        if not attractions:
+            return f"No live attraction results found for {city}."
+
+        lines: list[str] = []
+
+        for idx, place in enumerate(attractions[:8], start=1):
+            name = place.get("name", "Unknown")
+            kinds = (place.get("kinds") or "").replace("_", " ").replace(",", ", ")
+            category = kinds.split(",")[0].strip().title() if kinds else "Attraction"
+            dist = place.get("dist")
+            address_data = place.get("address", {})
+            address_parts = [
+                address_data.get("road", ""),
+                address_data.get("city", ""),
+                address_data.get("state", ""),
+                address_data.get("country", ""),
+            ]
+            address = ", ".join([x for x in address_parts if x])
+
+            sentence = f"{idx}. {name}. Type: {category}."
+            if dist is not None:
+                sentence += f" About {float(dist)/1000:.1f} km from city center."
+            if address:
+                sentence += f" Address: {address}."
+            lines.append(sentence)
+
+        return "\n".join(lines)
 
     def _compose_final(
         self,
@@ -466,57 +506,50 @@ class PlannerService:
         restaurants: str,
         attractions: str,
         currency: str,
-        itinerary: str,
-        budget_optimizer: str,
     ) -> str:
         city_safe = escape(city)
         return f"""
 <article class=\"result-shell\">
     <header class=\"result-hero\">
-        <p class=\"result-kicker\">Concierge Plan</p>
+        <p class=\"result-kicker\">Trip Brief</p>
         <h2>{city_safe}</h2>
+        <p class=\"result-summary\">A clean, practical snapshot of your trip, written to be easy to scan and easy to trust.</p>
         <div class=\"chip-row\">
             <span class=\"chip\">Live APIs</span>
-            <span class=\"chip\">Weather + Seasonal Estimate</span>
-            <span class=\"chip\">Low / Medium / Luxury</span>
+            <span class=\"chip\">Weather snapshot</span>
+            <span class=\"chip\">Stay, food, and places</span>
         </div>
     </header>
 
     <section class=\"result-card\">
-        <h3>Weather Intelligence</h3>
-        {self._to_html_paragraphs(weather)}
+        <h3>Weather for your dates</h3>
+        <div class=\"weather-prose\">{self._to_html_paragraphs(weather)}</div>
     </section>
 
     <section class=\"result-card\">
-        <h3>Hotel Intelligence</h3>
-        {self._to_html_list(hotels)}
+        <h3>Where you could stay</h3>
+        {self._to_html_blocks(hotels)}
     </section>
 
     <section class=\"result-card two-col\">
         <div>
-            <h3>Restaurant Intelligence</h3>
-            {self._to_html_list(restaurants)}
+            <h3>Food ideas</h3>
+            {self._to_html_blocks(restaurants)}
         </div>
         <div>
-            <h3>Attraction Intelligence</h3>
-            {self._to_html_list(attractions)}
+            <h3>What to see</h3>
+            {self._to_html_blocks(attractions)}
         </div>
     </section>
 
-    <section class=\"result-card\">
-        <h3>Currency Intelligence</h3>
-        {self._to_html_paragraphs(currency)}
+    <section class=\"result-card summary-card\">
+        <h3>Budget at a glance</h3>
+        <p class=\"budget-intro\">{self._escape_text(currency)}</p>
     </section>
 
-    <section class=\"result-card\">
-        <h3>Budget Optimizer</h3>
-        {self._to_html_list(budget_optimizer)}
-    </section>
-
-    <section class=\"result-card\">
-        <h3>Signature Itinerary</h3>
-        {self._to_html_list(itinerary)}
-    </section>
+    <p style=\"text-align: center; margin-top: 32px; color: #999; font-size: 0.9em;\">
+        Itinerary & Budget recommendations available via Chatbot →
+    </p>
 </article>
 """.strip()
 
@@ -526,9 +559,12 @@ class PlannerService:
             return "<p>No data available.</p>"
         return "".join(f"<p>{line}</p>" for line in lines)
 
-    def _to_html_list(self, text: str) -> str:
+    def _escape_text(self, text: str) -> str:
+        return escape(text.strip()) if text.strip() else "No data available."
+
+    def _to_html_blocks(self, text: str) -> str:
         lines = [escape(line.strip()) for line in text.splitlines() if line.strip()]
         if not lines:
             return "<p>No data available.</p>"
-        items = "".join(f"<li>{line}</li>" for line in lines)
-        return f"<ul class=\"result-list\">{items}</ul>"
+        items = "".join(f"<div class=\"summary-item\"><p class=\"summary-text\">{line}</p></div>" for line in lines)
+        return f"<div class=\"summary-grid\">{items}</div>"
