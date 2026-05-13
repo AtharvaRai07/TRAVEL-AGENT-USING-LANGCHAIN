@@ -415,9 +415,9 @@ class PlannerService:
     ) -> str:
 
         if not hotels:
-            return f"No live hotel results found for {city}."
+            return "<p class=\"empty-line\">No live hotel results found for this trip.</p>"
 
-        lines: list[str] = []
+        cards: list[str] = []
 
         for idx, hotel in enumerate(hotels[:5], start=1):
             name = hotel.get("title", "Unknown")
@@ -427,19 +427,24 @@ class PlannerService:
             address = hotel.get("primaryInfo") or ""
             price_details = hotel.get("priceDetails") or ""
 
-            sentence = f"{idx}. {name}. Rating: {rating}/5 based on {reviews} reviews. Price: {price_level}."
+            card = [
+                "<div class=\"spot-card\">",
+                f"<div class=\"spot-top\"><span class=\"spot-index\">{idx}</span><span class=\"spot-name hotel-name\">{escape(str(name))}</span></div>",
+                f"<p class=\"spot-meta\"><span class=\"spot-label\">Rating</span><span class=\"spot-value\">{escape(str(rating))}/5</span> <span class=\"spot-muted\">based on {escape(str(reviews))} reviews</span></p>",
+                f"<p class=\"spot-meta\"><span class=\"spot-label\">Price</span><span class=\"spot-value spot-price\">{escape(str(price_level))}</span></p>",
+            ]
             if address:
-                sentence += f" Area: {address}."
+                card.append(f"<p class=\"spot-address\">{escape(str(address))}</p>")
             if price_details:
-                sentence += f" Details: {price_details}."
-            lines.append(sentence)
+                card.append(f"<p class=\"spot-note\">{escape(str(price_details))}</p>")
+            card.append("</div>")
+            cards.append("".join(card))
 
-        lines.append(
-            "Neighborhood strategy: prioritize central districts "
-            "with short commute to core attractions."
+        cards.append(
+            "<p class=\"section-note\">Neighborhood strategy: prioritize central districts with short commute to core attractions.</p>"
         )
 
-        return "\n".join(lines)
+        return "".join(cards)
 
 
     def _restaurant_brief(
@@ -449,9 +454,9 @@ class PlannerService:
     ) -> str:
 
         if not restaurants:
-            return f"No live restaurant results found for {city}."
+            return "<p class=\"empty-line\">No live restaurant results found for this trip.</p>"
 
-        lines: list[str] = []
+        cards: list[str] = []
 
         for idx, item in enumerate(restaurants[:6], start=1):
             name = item.get("name", "Unknown")
@@ -459,9 +464,16 @@ class PlannerService:
             price_level = item.get("priceTag", "N/A")
             types = ", ".join(item.get("establishmentTypeAndCuisineTags", [])[:3]) or "N/A"
 
-            lines.append(f"{idx}. {name}. Rating: {rating}/5. Cuisine: {types}. Price level: {price_level}.")
+            cards.append(
+                "<div class=\"spot-card\">"
+                f"<div class=\"spot-top\"><span class=\"spot-index\">{idx}</span><span class=\"spot-name food-name\">{escape(str(name))}</span></div>"
+                f"<p class=\"spot-meta\"><span class=\"spot-label\">Rating</span><span class=\"spot-value\">{escape(str(rating))}/5</span></p>"
+                f"<p class=\"spot-meta\"><span class=\"spot-label\">Cuisine</span><span class=\"spot-type\">{escape(types)}</span></p>"
+                f"<p class=\"spot-meta\"><span class=\"spot-label\">Price</span><span class=\"spot-price\">{escape(str(price_level))}</span></p>"
+                "</div>"
+            )
 
-        return "\n".join(lines)
+        return "".join(cards)
 
 
     def _attraction_brief(
@@ -471,9 +483,9 @@ class PlannerService:
     ) -> str:
 
         if not attractions:
-            return f"No live attraction results found for {city}."
+            return "<p class=\"empty-line\">No live attraction results found for this trip.</p>"
 
-        lines: list[str] = []
+        cards: list[str] = []
 
         for idx, place in enumerate(attractions[:8], start=1):
             name = place.get("name", "Unknown")
@@ -489,14 +501,19 @@ class PlannerService:
             ]
             address = ", ".join([x for x in address_parts if x])
 
-            sentence = f"{idx}. {name}. Type: {category}."
+            card = [
+                "<div class=\"spot-card attraction-card\">",
+                f"<div class=\"spot-top\"><span class=\"spot-index\">{idx}</span><span class=\"spot-name attraction-name\">{escape(str(name))}</span></div>",
+                f"<p class=\"spot-meta\"><span class=\"spot-label\">Type</span><span class=\"spot-type\">{escape(category)}</span></p>",
+            ]
             if dist is not None:
-                sentence += f" About {float(dist)/1000:.1f} km from city center."
+                card.append(f"<p class=\"spot-meta\"><span class=\"spot-label\">Distance</span><span class=\"spot-value\">About {float(dist)/1000:.1f} km from the city center</span></p>")
             if address:
-                sentence += f" Address: {address}."
-            lines.append(sentence)
+                card.append(f"<p class=\"spot-address\">{escape(address)}</p>")
+            card.append("</div>")
+            cards.append("".join(card))
 
-        return "\n".join(lines)
+        return "".join(cards)
 
     def _compose_final(
         self,
@@ -546,10 +563,6 @@ class PlannerService:
         <h3>Budget at a glance</h3>
         <p class=\"budget-intro\">{self._escape_text(currency)}</p>
     </section>
-
-    <p style=\"text-align: center; margin-top: 32px; color: #999; font-size: 0.9em;\">
-        Itinerary & Budget recommendations available via Chatbot →
-    </p>
 </article>
 """.strip()
 

@@ -79,8 +79,15 @@ Please create a detailed budget plan that includes:
    - Best times to visit specific venues
    - Transportation optimization
 
-Format the response clearly with sections and subsections for easy reading.
-Be practical and realistic with pricing.""",
+Format the response as markdown tables only, with clear section headings.
+Section headings must be short Title Case (e.g. "Budget breakdown", "Recommendations by tier") — never ALL CAPS blocks.
+
+Use these tables:
+1. Budget breakdown table with columns: Category, Suggested Spend, Notes.
+2. Budget tier table with columns: Tier, Estimated Total, Best For.
+3. Daily spend table with columns: Date/Day, Planned Spend, Notes.
+
+Keep the text short, direct, and easy to scan. Avoid long paragraphs and avoid bullet lists.""",
         )
 
         self.chain = self.prompt_template | self.llm | StrOutputParser()
