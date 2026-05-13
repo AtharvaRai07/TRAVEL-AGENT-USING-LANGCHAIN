@@ -32,9 +32,17 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 
 @app.get("/")
 async def login(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse(
+        request=request,
+        name="login.html",
+        context={"request": request},
+    )
 
 
 @app.get("/dashboard")
 async def dashboard(request: Request):
-    return templates.TemplateResponse("dashboard.html", {"request": request, "app_name": settings.app_name})
+    return templates.TemplateResponse(
+        request=request,
+        name="dashboard.html",
+        context={"request": request, "app_name": settings.app_name},
+    )
