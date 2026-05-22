@@ -450,9 +450,14 @@ class PlannerService:
             rating = hotel.get("bubbleRating", {}).get("rating", "N/A")
             reviews = hotel.get("bubbleRating", {}).get("count", "N/A")
             price_level = hotel.get("priceForDisplay", "")
-            if not price_level or str(price_level).strip().upper() in {"N/A", "NONE", "NULL"}:
+            # Always ensure a price is set; use fallback if empty
+            if not price_level or str(price_level).strip().upper() in {"N/A", "NONE", "NULL", ""}:
                 price_level = self._estimate_hotel_price(city, str(name))
-            price_level = self._normalize_inr_text(price_level)
+            else:
+                price_level = self._normalize_inr_text(price_level)
+            # Final safeguard: if still empty, generate fallback
+            if not price_level or str(price_level).strip() == "":
+                price_level = self._estimate_hotel_price(city, str(name))
             address = hotel.get("primaryInfo") or ""
             price_details = hotel.get("priceDetails") or ""
             if not price_details:
@@ -500,9 +505,14 @@ class PlannerService:
             name = item.get("name", "Unknown")
             rating = item.get("averageRating", "N/A")
             price_level = item.get("priceTag", "")
-            if not price_level or str(price_level).strip().upper() in {"N/A", "NONE", "NULL"}:
+            # Always ensure a price is set; use fallback if empty
+            if not price_level or str(price_level).strip().upper() in {"N/A", "NONE", "NULL", ""}:
                 price_level = self._estimate_restaurant_price(city, str(name))
-            price_level = self._normalize_inr_text(price_level)
+            else:
+                price_level = self._normalize_inr_text(price_level)
+            # Final safeguard: if still empty, generate fallback
+            if not price_level or str(price_level).strip() == "":
+                price_level = self._estimate_restaurant_price(city, str(name))
             types = ", ".join(item.get("establishmentTypeAndCuisineTags", [])[:3]) or "N/A"
 
             cards.append(

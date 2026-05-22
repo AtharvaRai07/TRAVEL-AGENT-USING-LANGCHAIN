@@ -935,7 +935,7 @@ button:hover {
 
 .result-shell {
     display: grid;
-    gap: 16px;
+    gap: 14px;
     animation: reveal-up .5s ease both;
 }
 
@@ -1168,6 +1168,8 @@ button:hover {
     flex-direction: row;
     align-items: flex-start;
     gap: 14px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .spot-card+.spot-card {
@@ -1313,6 +1315,7 @@ button:hover {
 .spot-meta-item-wide {
     flex-basis: 100%;
     white-space: normal;
+    margin-top: 8px;
 }
 
 .spot-card-restaurant .spot-meta-grid,
