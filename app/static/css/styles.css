@@ -21,6 +21,25 @@
     --body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
+body.dark-mode {
+    --bg: #0b1220;
+    --bg-deep: #050814;
+    --ink: #e5eef8;
+    --card: #0f172a;
+    --card-soft: #111c31;
+    --line: #24314a;
+    --line-strong: #334155;
+    --accent: #2dd4bf;
+    --accent-hover: #5eead4;
+    --accent-soft: rgba(45, 212, 191, 0.16);
+    --accent-2: #8b5cf6;
+    --accent-2-soft: rgba(139, 92, 246, 0.16);
+    --muted: #91a4bb;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.18);
+    --shadow-md: 0 12px 40px rgba(0, 0, 0, 0.28);
+    --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.36);
+}
+
 * {
     box-sizing: border-box;
 }
@@ -45,6 +64,13 @@ body {
 body.dashboard-page {
     position: relative;
     overflow-x: hidden;
+}
+
+body.dark-mode {
+    background:
+        radial-gradient(1200px 520px at 8% -12%, rgba(45, 212, 191, 0.08) 0%, transparent 55%),
+        radial-gradient(900px 480px at 92% 0%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+        linear-gradient(165deg, #050814 0%, #0b1220 55%, #10192a 100%);
 }
 
 .dashboard-bg {
@@ -75,6 +101,18 @@ body.dashboard-page {
 .dashboard-page .dashboard-container {
     position: relative;
     z-index: 1;
+}
+
+body.dark-mode .dashboard-bg {
+    background:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(45, 212, 191, 0.12), transparent),
+        radial-gradient(ellipse 60% 40% at 100% 50%, rgba(139, 92, 246, 0.1), transparent),
+        radial-gradient(ellipse 50% 35% at 0% 80%, rgba(245, 158, 11, 0.05), transparent);
+}
+
+body.dark-mode .dashboard-header {
+    background: rgba(15, 23, 42, 0.82);
+    border-bottom-color: rgba(36, 49, 74, 0.9);
 }
 
 .dashboard-header {
@@ -175,6 +213,30 @@ body.dashboard-page {
     flex-shrink: 0;
 }
 
+.btn-theme-toggle {
+    width: auto;
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: var(--card);
+    color: var(--ink);
+    box-shadow: var(--shadow-sm);
+    font-weight: 650;
+    font-size: 0.875rem;
+}
+
+.btn-theme-toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent-hover);
+}
+
+body.dark-mode .btn-theme-toggle,
+body.dark-mode .btn-logout {
+    background: #0f172a;
+    color: var(--ink);
+    border-color: #24314a;
+}
+
 .user-greeting {
     color: var(--muted);
     font-size: 0.9375rem;
@@ -243,6 +305,22 @@ body.dashboard-page {
     box-shadow: var(--shadow-md);
     display: flex;
     flex-direction: column;
+}
+
+body.dark-mode .sidebar-inner,
+body.dark-mode .panel,
+body.dark-mode .panel-elevated,
+body.dark-mode .result-card,
+body.dark-mode .plan-item,
+body.dark-mode .result-hero,
+body.dark-mode .chip,
+body.dark-mode .spot-card,
+body.dark-mode .summary-item,
+body.dark-mode .budget-tier,
+body.dark-mode .plan-info {
+    background: rgba(15, 23, 42, 0.88);
+    border-color: rgba(36, 49, 74, 0.95);
+    box-shadow: none;
 }
 
 .sidebar-header {
@@ -1076,7 +1154,7 @@ button:hover {
 
 .summary-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: 10px;
 }
 
@@ -1095,9 +1173,8 @@ button:hover {
 }
 
 .spot-card-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr;
     gap: 12px;
 }
 
@@ -1183,11 +1260,11 @@ button:hover {
 }
 
 .spot-card-price {
-    flex: 0 0 auto;
-    min-width: 132px;
-    display: grid;
-    gap: 4px;
-    justify-items: end;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
     padding: 10px 12px;
     border-radius: 12px;
     background: #fff;
@@ -1205,7 +1282,7 @@ button:hover {
 
 .spot-meta-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: 10px;
 }
 
@@ -1248,15 +1325,51 @@ button:hover {
 }
 
 .spot-card-restaurant .spot-card-price {
-    min-width: 120px;
+    min-width: 0;
 }
 
 .spot-card-hotel .spot-card-price {
-    min-width: 150px;
+    min-width: 0;
 }
 
 .attraction-card .spot-card-price {
-    min-width: 140px;
+    min-width: 0;
+}
+
+body.dark-mode .spot-card,
+body.dark-mode .summary-item,
+body.dark-mode .budget-tier,
+body.dark-mode .result-card,
+body.dark-mode .chip,
+body.dark-mode .spot-card-price,
+body.dark-mode .spot-meta-item {
+    background: #0f172a;
+    border-color: #24314a;
+}
+
+body.dark-mode .spot-card-sub,
+body.dark-mode .summary-text,
+body.dark-mode .section-note,
+body.dark-mode .empty-line,
+body.dark-mode .budget-intro,
+body.dark-mode .result-card p,
+body.dark-mode .hero-lede,
+body.dark-mode .panel-sub,
+body.dark-mode .tagline,
+body.dark-mode .plan-dates,
+body.dark-mode .loading-text,
+body.dark-mode .empty-copy,
+body.dark-mode .user-greeting,
+body.dark-mode .meta,
+body.dark-mode .summary-label,
+body.dark-mode .spot-label,
+body.dark-mode .spot-price-label,
+body.dark-mode .spot-value,
+body.dark-mode .spot-type,
+body.dark-mode .spot-price,
+body.dark-mode .spot-address,
+body.dark-mode .spot-note {
+    color: #c7d2e2;
 }
 
 .section-note,

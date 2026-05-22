@@ -27,13 +27,15 @@
             </div>
             <div class="user-section">
                 <span id="user-name" class="user-greeting"></span>
+                <button id="theme-toggle-btn" type="button" class="btn-theme-toggle" aria-label="Toggle dark mode">Dark
+                    mode</button>
                 <button id="logout-btn" type="button" class="btn-logout">Sign out</button>
             </div>
         </div>
     </header>
 
     <div class="dashboard-container">
-        
+
         <aside class="sidebar">
             <div class="sidebar-inner">
                 <div class="sidebar-header">
@@ -50,13 +52,14 @@
             </div>
         </aside>
 
-        
+
         <main class="main-content">
             <div class="main-inner">
                 <header class="main-hero">
                     <p class="hero-eyebrow">Workspace</p>
                     <h2 class="hero-title">Design your next escape</h2>
-                    <p class="hero-lede">Tell us where you are going—we will shape dates, budget, and style into a clear,
+                    <p class="hero-lede">Tell us where you are going—we will shape dates, budget, and style into a
+                        clear,
                         ready-to-use itinerary.</p>
                 </header>
 
@@ -64,98 +67,103 @@
                     <div class="tabs" role="tablist" aria-label="Dashboard sections">
                         <button type="button" class="tab-btn active" role="tab" aria-selected="true"
                             data-tab="planner">Travel planner</button>
-                        <button type="button" class="tab-btn" role="tab" aria-selected="false"
-                            data-tab="chatbot">Travel chatbot</button>
+                        <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="chatbot">Travel
+                            chatbot</button>
                     </div>
 
-                
-                <div id="planner" class="tab-content active" role="tabpanel">
-                    <section class="panel form-panel panel-elevated">
-                        <div class="panel-head">
-                            <h2 class="panel-title">Create a premium plan</h2>
-                            <p class="panel-sub">Fields marked with intent—nothing extra. Adjust anytime.</p>
-                        </div>
-                        <form id="plan-form" class="grid plan-grid">
-                            <label class="field">
-                                <span class="field-label">Destination city</span>
-                                <input name="city" required placeholder="e.g. Lisbon, Tokyo, Paris" autocomplete="off" />
-                            </label>
-                            <label class="field">
-                                <span class="field-label">Check-in</span>
-                                <input type="date" name="check_in" required />
-                            </label>
-                            <label class="field">
-                                <span class="field-label">Check-out</span>
-                                <input type="date" name="check_out" required />
-                            </label>
-                            <label class="field">
-                                <span class="field-label">Travelers</span>
-                                <input type="number" name="adults" min="1" max="10" value="2" required />
-                            </label>
-                            <label class="field">
-                                <span class="field-label">Budget amount</span>
-                                <input type="number" name="budget_amount" min="0" step="100" value="50000" required />
-                            </label>
-                            <label class="field">
-                                <span class="field-label">Currency</span>
-                                <input name="budget_currency" maxlength="3" value="INR" required
-                                    placeholder="INR, USD, EUR" />
-                            </label>
-                            <label class="full field">
-                                <span class="field-label">Trip style</span>
-                                <select name="style">
-                                    <option value="balanced">Balanced — mix of comfort & discovery</option>
-                                    <option value="luxury">Luxury — elevated stays & dining</option>
-                                    <option value="foodie">Foodie — flavors & local tables</option>
-                                    <option value="culture">Culture — museums, history & walks</option>
-                                </select>
-                            </label>
-                            <div class="form-actions full">
-                                <button type="submit" id="submit-btn" class="btn-primary-lg">Generate plan</button>
-                            </div>
-                        </form>
-                    </section>
 
-                    <section id="result" class="panel hidden panel-result">
-                        <div class="result-header">
-                            <h2>Your itinerary</h2>
-                            <button type="button" id="talk-more-btn" class="btn-talk-more">Chat about this trip</button>
-                        </div>
-                        <div id="result-meta" class="meta"></div>
-                        <article id="result-content" class="markdown"></article>
-                        <div id="plan-addons" class="plan-addons"></div>
-                    </section>
+                    <div id="planner" class="tab-content active" role="tabpanel">
+                        <section class="panel form-panel panel-elevated">
+                            <div class="panel-head">
+                                <h2 class="panel-title">Create a premium plan</h2>
+                                <p class="panel-sub">Fields marked with intent—nothing extra. Adjust anytime.</p>
+                            </div>
+                            <form id="plan-form" class="grid plan-grid">
+                                <label class="field">
+                                    <span class="field-label">Destination city</span>
+                                    <input name="city" required placeholder="e.g. Lisbon, Tokyo, Paris"
+                                        autocomplete="off" />
+                                </label>
+                                <label class="field">
+                                    <span class="field-label">Check-in</span>
+                                    <input type="date" name="check_in" required />
+                                </label>
+                                <label class="field">
+                                    <span class="field-label">Check-out</span>
+                                    <input type="date" name="check_out" required />
+                                </label>
+                                <label class="field">
+                                    <span class="field-label">Travelers</span>
+                                    <input type="number" name="adults" min="1" max="10" value="2" required />
+                                </label>
+                                <label class="field">
+                                    <span class="field-label">Budget amount</span>
+                                    <input type="number" name="budget_amount" min="0" step="100" value="50000"
+                                        required />
+                                </label>
+                                <label class="field">
+                                    <span class="field-label">Currency</span>
+                                    <input name="budget_currency" maxlength="3" value="INR" required
+                                        placeholder="INR, USD, EUR" />
+                                </label>
+                                <label class="full field">
+                                    <span class="field-label">Trip style</span>
+                                    <select name="style">
+                                        <option value="balanced">Balanced — mix of comfort & discovery</option>
+                                        <option value="luxury">Luxury — elevated stays & dining</option>
+                                        <option value="foodie">Foodie — flavors & local tables</option>
+                                        <option value="culture">Culture — museums, history & walks</option>
+                                    </select>
+                                </label>
+                                <div class="form-actions full">
+                                    <button type="submit" id="submit-btn" class="btn-primary-lg">Generate plan</button>
+                                </div>
+                            </form>
+                        </section>
+
+                        <section id="result" class="panel hidden panel-result">
+                            <div class="result-header">
+                                <h2>Your itinerary</h2>
+                                <button type="button" id="talk-more-btn" class="btn-talk-more">Chat about this
+                                    trip</button>
+                            </div>
+                            <div id="result-meta" class="meta"></div>
+                            <article id="result-content" class="markdown"></article>
+                            <div id="plan-addons" class="plan-addons"></div>
+                        </section>
+                    </div>
+
+
+                    <div id="chatbot" class="tab-content" role="tabpanel">
+                        <section class="panel form-panel panel-elevated">
+                            <div class="panel-head">
+                                <h2 class="panel-title">Travel chatbot</h2>
+                                <p class="panel-sub">Ask follow-ups about hotels, food, pacing, or budget—grounded in
+                                    your
+                                    plan.</p>
+                            </div>
+                            <form id="chatbot-form" class="grid">
+                                <div id="selected-plan-info" class="plan-info hidden">
+                                    <p id="plan-info-text"></p>
+                                </div>
+                                <button type="button" id="load-plan-btn" class="hidden">Load My Travel Plan</button>
+                            </form>
+
+                            <div id="chatbot-status" class="hidden alert"></div>
+
+                            <div id="chatbot-container" class="hidden">
+                                <div id="chat-messages" class="chat-messages"></div>
+                                <div class="chat-input-group">
+                                    <input type="text" id="chat-input" placeholder="Ask me anything about your trip..."
+                                        maxlength="2000" />
+                                    <button type="button" id="send-btn">Send</button>
+                                    <button type="button" id="clear-history-btn" class="secondary">Clear
+                                        History</button>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
                 </div>
-
-                
-                <div id="chatbot" class="tab-content" role="tabpanel">
-                    <section class="panel form-panel panel-elevated">
-                        <div class="panel-head">
-                            <h2 class="panel-title">Travel chatbot</h2>
-                            <p class="panel-sub">Ask follow-ups about hotels, food, pacing, or budget—grounded in your
-                                plan.</p>
-                        </div>
-                        <form id="chatbot-form" class="grid">
-                            <div id="selected-plan-info" class="plan-info hidden">
-                                <p id="plan-info-text"></p>
-                            </div>
-                            <button type="button" id="load-plan-btn" class="hidden">Load My Travel Plan</button>
-                        </form>
-
-                        <div id="chatbot-status" class="hidden alert"></div>
-
-                        <div id="chatbot-container" class="hidden">
-                            <div id="chat-messages" class="chat-messages"></div>
-                            <div class="chat-input-group">
-                                <input type="text" id="chat-input" placeholder="Ask me anything about your trip..."
-                                    maxlength="2000" />
-                                <button type="button" id="send-btn">Send</button>
-                                <button type="button" id="clear-history-btn" class="secondary">Clear History</button>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-            </div>
             </div>
         </main>
     </div>
@@ -163,12 +171,29 @@
     <script>
         const userEmail = sessionStorage.getItem('userEmail');
         const userName = sessionStorage.getItem('userName') || 'Traveler';
+        const themeKey = 'party-theme';
 
         if (!userEmail) {
             window.location.href = '/';
         }
 
+        function applyTheme(theme) {
+            document.body.classList.toggle('dark-mode', theme === 'dark');
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            if (themeBtn) {
+                themeBtn.textContent = theme === 'dark' ? 'Light mode' : 'Dark mode';
+            }
+            localStorage.setItem(themeKey, theme);
+        }
+
+        applyTheme(localStorage.getItem(themeKey) || 'light');
+
         document.getElementById('user-name').textContent = `Welcome, ${userName}`;
+
+        document.getElementById('theme-toggle-btn').addEventListener('click', () => {
+            const nextTheme = document.body.classList.contains('dark-mode') ? 'light' : 'dark';
+            applyTheme(nextTheme);
+        });
 
         document.getElementById('logout-btn').addEventListener('click', () => {
             sessionStorage.clear();

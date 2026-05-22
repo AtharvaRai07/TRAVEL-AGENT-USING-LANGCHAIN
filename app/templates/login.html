@@ -24,6 +24,17 @@
             --body: "DM Sans", "Segoe UI", sans-serif;
         }
 
+        body.dark-mode {
+            --bg: #0b1220;
+            --ink: #e5eef8;
+            --card: rgba(15, 23, 42, 0.92);
+            --line: #24314a;
+            --accent: #2dd4bf;
+            --accent-hover: #5eead4;
+            --accent-2: #8b5cf6;
+            --muted: #91a4bb;
+        }
+
         * {
             box-sizing: border-box;
         }
@@ -51,6 +62,42 @@
             box-shadow: 0 24px 64px rgba(15, 23, 42, 0.12);
             backdrop-filter: blur(18px);
             -webkit-backdrop-filter: blur(18px);
+        }
+
+        .login-topbar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 12px;
+        }
+
+        .theme-toggle {
+            width: auto;
+            padding: 10px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(219, 227, 238, 0.9);
+            background: rgba(248, 250, 252, 0.92);
+            color: var(--ink);
+            font-weight: 700;
+            font-size: 0.86rem;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-1px);
+            border-color: rgba(13, 148, 136, 0.45);
+            box-shadow: 0 14px 24px rgba(15, 23, 42, 0.12);
+        }
+
+        body.dark-mode .login-container {
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.34);
+        }
+
+        body.dark-mode .theme-toggle {
+            background: #0f172a;
+            border-color: #24314a;
+            color: var(--ink);
         }
 
         .login-header {
@@ -100,6 +147,17 @@
             background: white;
             color: var(--accent);
             box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+        }
+
+        body.dark-mode .tab-switch {
+            background: rgba(15, 23, 42, 0.7);
+            border-color: rgba(36, 49, 74, 0.95);
+        }
+
+        body.dark-mode .tab-switch button.active {
+            background: #111c31;
+            color: var(--accent);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
         }
 
         .auth-form {
@@ -154,6 +212,20 @@
             background: white;
             border-color: rgba(13, 148, 136, 0.55);
             box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.12);
+        }
+
+        body.dark-mode .form-group label {
+            color: #cbd5e1;
+        }
+
+        body.dark-mode .form-group input {
+            background: #0f172a;
+            color: var(--ink);
+            border-color: #24314a;
+        }
+
+        body.dark-mode .form-group input:focus {
+            background: #111c31;
         }
 
         .form-actions {
@@ -216,6 +288,12 @@
             display: block;
         }
 
+        body.dark-mode .error {
+            background: rgba(127, 29, 29, 0.22);
+            border-color: rgba(248, 113, 113, 0.28);
+            color: #fecaca;
+        }
+
         .loading {
             opacity: 0.72;
             pointer-events: none;
@@ -236,6 +314,9 @@
 
 <body>
     <div class="login-container">
+        <div class="login-topbar">
+            <button id="theme-toggle-btn" type="button" class="theme-toggle">Dark mode</button>
+        </div>
         <div class="login-header">
             <h1>{{ app_name }}</h1>
             <p>Plan journeys across India with clarity and ease.</p>
@@ -276,6 +357,24 @@
     </div>
 
     <script>
+        const themeKey = 'party-theme';
+
+        function applyTheme(theme) {
+            document.body.classList.toggle('dark-mode', theme === 'dark');
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            if (themeBtn) {
+                themeBtn.textContent = theme === 'dark' ? 'Light mode' : 'Dark mode';
+            }
+            localStorage.setItem(themeKey, theme);
+        }
+
+        applyTheme(localStorage.getItem(themeKey) || 'light');
+
+        document.getElementById('theme-toggle-btn').addEventListener('click', () => {
+            const nextTheme = document.body.classList.contains('dark-mode') ? 'light' : 'dark';
+            applyTheme(nextTheme);
+        });
+
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
