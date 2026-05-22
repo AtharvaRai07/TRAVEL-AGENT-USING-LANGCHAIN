@@ -25,7 +25,7 @@ class PlannerService:
         hotels_data = await self._fetch_hotels(req.city, req.check_in, req.check_out, req.adults)
         restaurants_data = await self._fetch_restaurants(req.city)
         attractions_data = await self._fetch_attractions(req.city)
-        currency_data = await self._currency_brief(req.budget_currency, "USD", req.budget_amount)
+        currency_data = await self._currency_brief(req.budget_currency, "INR", req.budget_amount)
 
         hotels = self._hotel_brief(req.city, hotels_data)
         restaurants = self._restaurant_brief(req.city, restaurants_data)
@@ -290,7 +290,7 @@ class PlannerService:
                         "checkOut": check_out.isoformat(),
                         "adults": adults,
                         "pageNumber": 1,
-                        "currencyCode": "USD",
+                        "currencyCode": "INR",
                     },
                 )
                 return hotel_resp.json().get("data", {}).get("data", [])[:8]
@@ -392,23 +392,11 @@ class PlannerService:
             return []
 
     async def _currency_brief(self, base: str, target: str, amount: float) -> str:
-        base = base.upper()
-        target = target.upper()
-        url = f"https://api.exchangerate-api.com/v4/latest/{base}"
-        try:
-            async with httpx.AsyncClient(timeout=20) as client:
-                res = await client.get(url)
-                data = res.json()
-            rate = data.get("rates", {}).get(target)
-            if not rate:
-                return f"Currency conversion unavailable for {base}->{target}."
-            converted = amount * float(rate)
-            return (
-                f"At today’s rate, {amount:.0f} {base} is roughly {converted:.2f} {target}. "
-                f"That gives you a comfortable working budget for this trip, depending on how premium you want to go."
-            )
-        except Exception:
-            return f"Currency conversion unavailable for {base}->{target}."
+        amount_value = int(round(amount))
+        return (
+            f"Budget guidance is shown entirely in INR. Your planned spend is about ₹{amount_value:,}. "
+            f"That keeps the trip easy to read and compare without switching currencies."
+        )
 
     def _price_rng(self, city: str, name: str, kind: str) -> random.Random:
         seed_text = f"{city}|{name}|{kind}".encode("utf-8")
@@ -437,6 +425,15 @@ class PlannerService:
         value = rng.randint(low, high)
         return f"Estimated {label}: ₹{value:,} per person"
 
+    def _normalize_inr_text(self, value: Any) -> str:
+        text = str(value or "").strip()
+        if not text:
+            return "INR"
+        text = text.replace("USD", "INR")
+        text = text.replace("usd", "INR")
+        text = text.replace("$", "₹")
+        return text
+
     def _hotel_brief(
         self,
         city: str,
@@ -455,10 +452,12 @@ class PlannerService:
             price_level = hotel.get("priceForDisplay", "")
             if not price_level or str(price_level).strip().upper() in {"N/A", "NONE", "NULL"}:
                 price_level = self._estimate_hotel_price(city, str(name))
+            price_level = self._normalize_inr_text(price_level)
             address = hotel.get("primaryInfo") or ""
             price_details = hotel.get("priceDetails") or ""
             if not price_details:
                 price_details = "Estimated fallback based on similar stays in the area."
+            price_details = self._normalize_inr_text(price_details)
 
             card = [
                 "<div class=\"spot-card spot-card-hotel\">",
@@ -503,6 +502,7 @@ class PlannerService:
             price_level = item.get("priceTag", "")
             if not price_level or str(price_level).strip().upper() in {"N/A", "NONE", "NULL"}:
                 price_level = self._estimate_restaurant_price(city, str(name))
+            price_level = self._normalize_inr_text(price_level)
             types = ", ".join(item.get("establishmentTypeAndCuisineTags", [])[:3]) or "N/A"
 
             cards.append(
