@@ -432,36 +432,21 @@
                     <h3>Itinerary</h3>
                     <p class="section-note">Loading itinerary for this plan...</p>
                 </section>
-                <section class="result-card summary-card">
-                    <h3>Budget</h3>
-                    <p class="section-note">Loading budget for this plan...</p>
-                </section>
             `;
 
             try {
-                const [itineraryResponse, budgetResponse] = await Promise.all([
-                    fetch(`/api/v1/itinerary/${encodeURIComponent(plan.email_id)}?${planIdValue}${cityValueQuery}`, {
-                        method: 'POST'
-                    }),
-                    fetch(`/api/v1/budget/${encodeURIComponent(plan.email_id)}?${planIdValue}${cityValueQuery}`, {
-                        method: 'POST'
-                    }),
-                ]);
+                const itineraryResponse = await fetch(`/api/v1/itinerary/${encodeURIComponent(plan.email_id)}?${planIdValue}${cityValueQuery}`, {
+                    method: 'POST'
+                });
 
                 const itineraryData = itineraryResponse.ok ? await itineraryResponse.json() : null;
-                const budgetData = budgetResponse.ok ? await budgetResponse.json() : null;
 
                 const itineraryBody = itineraryData?.itinerary || 'No itinerary available for this plan yet.';
-                const budgetBody = budgetData?.budget_plan || 'No budget guidance available for this plan yet.';
 
                 addons.innerHTML = `
                     <section class="result-card">
                         <h3>Itinerary</h3>
                         <div class="plan-addon-content itinerary-intro">${marked.parse(decodeHtmlEntities(String(itineraryBody)))}</div>
-                    </section>
-                    <section class="result-card summary-card">
-                        <h3>Budget</h3>
-                        <div class="plan-addon-content">${marked.parse(decodeHtmlEntities(String(budgetBody)))}</div>
                     </section>
                 `;
             } catch (error) {
@@ -469,10 +454,6 @@
                     <section class="result-card">
                         <h3>Itinerary</h3>
                         <p class="warning-note">Unable to load itinerary right now.</p>
-                    </section>
-                    <section class="result-card summary-card">
-                        <h3>Budget</h3>
-                        <p class="warning-note">Unable to load budget right now.</p>
                     </section>
                 `;
             }

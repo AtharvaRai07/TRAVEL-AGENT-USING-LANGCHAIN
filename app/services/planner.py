@@ -610,10 +610,6 @@ class PlannerService:
         </div>
     </section>
 
-    <section class=\"result-card summary-card\">
-        <h3>Budget at a glance</h3>
-        <p class=\"budget-intro\">{self._escape_text(currency)}</p>
-    </section>
 </article>
 """.strip()
 
