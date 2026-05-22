@@ -1173,9 +1173,10 @@ button:hover {
 }
 
 .spot-card-head {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
 }
 
 .spot-index {
@@ -1202,7 +1203,8 @@ button:hover {
 
 .spot-card-copy {
     min-width: 0;
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 4px;
 }
 
@@ -1233,6 +1235,11 @@ button:hover {
     line-height: 1.55;
 }
 
+.spot-card-body {
+    display: grid;
+    gap: 10px;
+}
+
 .spot-label {
     display: inline-block;
     min-width: 76px;
@@ -1260,11 +1267,13 @@ button:hover {
 }
 
 .spot-card-price {
-    width: 100%;
+    width: auto;
+    min-width: 138px;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 4px;
     padding: 10px 12px;
     border-radius: 12px;
     background: #fff;
@@ -1282,7 +1291,7 @@ button:hover {
 
 .spot-meta-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
 }
 
@@ -1294,6 +1303,18 @@ button:hover {
 }
 
 .spot-meta-item-wide {
+    grid-column: 1 / -1;
+}
+
+.spot-card-restaurant .spot-meta-grid,
+.spot-card-hotel .spot-meta-grid,
+.attraction-card .spot-meta-grid {
+    align-items: stretch;
+}
+
+.spot-card-restaurant .spot-meta-item-wide,
+.spot-card-hotel .spot-meta-item-wide,
+.attraction-card .spot-meta-item-wide {
     grid-column: 1 / -1;
 }
 
@@ -1325,15 +1346,80 @@ button:hover {
 }
 
 .spot-card-restaurant .spot-card-price {
-    min-width: 0;
+    min-width: 118px;
 }
 
 .spot-card-hotel .spot-card-price {
-    min-width: 0;
+    min-width: 130px;
 }
 
 .attraction-card .spot-card-price {
-    min-width: 0;
+    min-width: 126px;
+}
+
+.plan-item {
+    position: relative;
+    padding-right: 42px;
+}
+
+.plan-item-body {
+    display: grid;
+    gap: 4px;
+}
+
+.plan-menu-btn {
+    position: absolute;
+    top: 10px;
+    right: 8px;
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--muted);
+    font-size: 1.35rem;
+    line-height: 1;
+    padding: 0;
+}
+
+.plan-menu-btn:hover {
+    background: rgba(13, 148, 136, 0.08);
+    color: var(--accent-hover);
+    box-shadow: none;
+    transform: none;
+}
+
+.plan-menu {
+    position: absolute;
+    right: 8px;
+    top: 40px;
+    z-index: 6;
+    width: 160px;
+    padding: 6px;
+    border-radius: 14px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-lg);
+}
+
+.plan-menu.hidden {
+    display: none;
+}
+
+.plan-menu-action {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: transparent;
+    color: #b91c1c;
+    font-weight: 650;
+    text-align: left;
+}
+
+.plan-menu-action:hover {
+    background: rgba(185, 28, 28, 0.08);
+    box-shadow: none;
+}
 }
 
 body.dark-mode .spot-card,

@@ -111,3 +111,21 @@ class SupabaseService:
         except Exception as e:
             print(f"[ERROR] Failed to fetch plan by id: {str(e)}", file=sys.stderr)
             raise Exception(f"Failed to fetch plan by id: {str(e)}")
+
+    def delete_plan_by_id(self, email_id: str, plan_id: int) -> bool:
+        try:
+            print(f"[DEBUG] Deleting plan by id: email={email_id}, plan_id={plan_id}", file=sys.stderr)
+
+            response = (
+                self.client
+                .table(self.table_name)
+                .delete()
+                .eq("email_id", email_id)
+                .eq("id", plan_id)
+                .execute()
+            )
+
+            return bool(response.data)
+        except Exception as e:
+            print(f"[ERROR] Failed to delete plan by id: {str(e)}", file=sys.stderr)
+            raise Exception(f"Failed to delete plan by id: {str(e)}")

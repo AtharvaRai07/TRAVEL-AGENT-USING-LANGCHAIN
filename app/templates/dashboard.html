@@ -239,8 +239,14 @@
             }
             plansList.innerHTML = plans.map(plan => `
                 <div class="plan-item" data-plan-id="${plan.id}">
-                    <h4>${plan.city || plan.destination}</h4>
-                    <p class="plan-dates">${new Date(plan.check_in).toLocaleDateString()} - ${new Date(plan.check_out).toLocaleDateString()}</p>
+                    <button type="button" class="plan-menu-btn" aria-label="Plan options">⋯</button>
+                    <div class="plan-item-body">
+                        <h4>${escapeHtml(plan.city || plan.destination)}</h4>
+                        <p class="plan-dates">${new Date(plan.check_in).toLocaleDateString()} - ${new Date(plan.check_out).toLocaleDateString()}</p>
+                    </div>
+                    <div class="plan-menu hidden">
+                        <button type="button" class="plan-menu-action plan-delete-btn" data-plan-id="${plan.id}">Delete plan</button>
+                    </div>
                 </div>
             `).join('');
 
@@ -249,6 +255,63 @@
                     selectPlan(item.dataset.planId);
                 });
             });
+
+            document.querySelectorAll('.plan-menu-btn').forEach(btn => {
+                btn.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    const item = btn.closest('.plan-item');
+                    const menu = item?.querySelector('.plan-menu');
+                    document.querySelectorAll('.plan-menu').forEach(other => {
+                        if (other !== menu) other.classList.add('hidden');
+                    });
+                    if (menu) menu.classList.toggle('hidden');
+                });
+            });
+
+            document.querySelectorAll('.plan-delete-btn').forEach(btn => {
+                btn.addEventListener('click', async (event) => {
+                    event.stopPropagation();
+                    const planId = btn.dataset.planId;
+                    if (!planId) return;
+                    const confirmed = confirm('Delete this saved plan?');
+                    if (!confirmed) return;
+                    await deletePlan(planId);
+                });
+            });
+
+            if (!window.planMenuCloseHandlerAdded) {
+                document.addEventListener('click', (event) => {
+                    if (!event.target.closest('.plan-item')) {
+                        document.querySelectorAll('.plan-menu').forEach(menu => menu.classList.add('hidden'));
+                    }
+                });
+                window.planMenuCloseHandlerAdded = true;
+            }
+        }
+
+        async function deletePlan(planId) {
+            try {
+                const response = await fetch(`/api/v1/plans/${encodeURIComponent(userEmail)}/${encodeURIComponent(planId)}`, {
+                    method: 'DELETE'
+                });
+                if (!response.ok) {
+                    let detail = 'Unable to delete plan';
+                    try {
+                        const errorData = await response.json();
+                        detail = errorData.detail || detail;
+                    } catch (_) {
+                    }
+                    alert(detail);
+                    return;
+                }
+
+                const activePlan = document.querySelector(`[data-plan-id="${planId}"]`);
+                if (activePlan) activePlan.remove();
+                loadPastPlans();
+                document.getElementById('result').classList.add('hidden');
+            } catch (error) {
+                alert('Error deleting plan: ' + error.message);
+            }
         }
 
         async function selectPlan(planId) {

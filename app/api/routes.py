@@ -94,6 +94,21 @@ async def get_plan_details(email_id: str, plan_id: int) -> dict:
         raise HTTPException(status_code=500, detail=f"Failed to fetch plan details: {str(e)}")
 
 
+@router.delete("/plans/{email_id}/{plan_id}")
+async def delete_plan(email_id: str, plan_id: int) -> dict:
+    try:
+        supabase = get_supabase_service()
+        deleted = supabase.delete_plan_by_id(email_id, plan_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Plan not found")
+        return {"message": "Plan deleted", "plan_id": plan_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[ERROR] Failed to delete plan: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete plan: {str(e)}")
+
+
 @router.post("/chat", response_model=ChatResponse)
 async def chat(payload: ChatRequest) -> ChatResponse:
     try:
