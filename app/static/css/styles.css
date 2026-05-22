@@ -643,10 +643,16 @@ body.dark-mode .plan-info {
 }
 
 .plan-addons {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 16px;
     margin-top: 16px;
+}
+
+.plan-addon-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
 .bg-orb {
@@ -1160,17 +1166,14 @@ button:hover {
 }
 
 .spot-card {
-    border: 1px solid #e8dbc9;
+    border: 1px solid var(--line);
     border-radius: 14px;
     padding: 14px;
-    background: linear-gradient(180deg, #fffdf9 0%, #fbf5eb 100%);
-    box-shadow: 0 6px 16px rgba(43, 60, 74, 0.04);
+    background: var(--card-soft);
+    box-shadow: var(--shadow-sm);
     display: flex;
-    flex-direction: row;
-    align-items: flex-start;
+    flex-direction: column;
     gap: 14px;
-    width: 100%;
-    box-sizing: border-box;
 }
 
 .spot-card+.spot-card {
@@ -1434,7 +1437,7 @@ button:hover {
     background: rgba(185, 28, 28, 0.08);
     box-shadow: none;
 }
-}
+
 
 body.dark-mode .spot-card,
 body.dark-mode .summary-item,
