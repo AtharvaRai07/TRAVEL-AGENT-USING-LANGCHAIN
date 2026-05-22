@@ -644,6 +644,7 @@ body.dark-mode .plan-info {
 
 .plan-addons {
     display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 16px;
     margin-top: 16px;
 }
