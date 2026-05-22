@@ -1083,20 +1083,22 @@ button:hover {
 .spot-card {
     border: 1px solid #e8dbc9;
     border-radius: 14px;
-    padding: 12px 12px 11px;
+    padding: 14px;
     background: linear-gradient(180deg, #fffdf9 0%, #fbf5eb 100%);
     box-shadow: 0 6px 16px rgba(43, 60, 74, 0.04);
+    display: grid;
+    gap: 12px;
 }
 
 .spot-card+.spot-card {
     margin-top: 10px;
 }
 
-.spot-top {
+.spot-card-head {
     display: flex;
-    align-items: baseline;
-    gap: 10px;
-    margin-bottom: 8px;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
 }
 
 .spot-index {
@@ -1111,6 +1113,20 @@ button:hover {
     justify-content: center;
     font-size: .8rem;
     font-weight: 800;
+}
+
+.spot-card-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+}
+
+.spot-card-copy {
+    min-width: 0;
+    display: grid;
+    gap: 4px;
 }
 
 .spot-name {
@@ -1133,10 +1149,11 @@ button:hover {
     color: #225d45;
 }
 
-.spot-meta {
-    margin: 0 0 6px;
-    line-height: 1.62;
-    color: #324555;
+.spot-card-sub {
+    margin: 0;
+    color: #5f7080;
+    font-size: 0.9rem;
+    line-height: 1.55;
 }
 
 .spot-label {
@@ -1165,6 +1182,55 @@ button:hover {
     color: #264e9a;
 }
 
+.spot-card-price {
+    flex: 0 0 auto;
+    min-width: 132px;
+    display: grid;
+    gap: 4px;
+    justify-items: end;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #fff;
+    border: 1px solid #eadccc;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+.spot-price-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 800;
+    color: #6a7b88;
+}
+
+.spot-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.spot-meta-item {
+    border: 1px solid #ecdfcf;
+    background: #fffdf9;
+    border-radius: 12px;
+    padding: 10px 12px;
+}
+
+.spot-meta-item-wide {
+    grid-column: 1 / -1;
+}
+
+.spot-meta-item .spot-label {
+    display: block;
+    min-width: 0;
+    margin: 0 0 4px;
+}
+
+.spot-meta-item .spot-value {
+    display: block;
+    line-height: 1.55;
+}
+
 .spot-address {
     margin: 8px 0 0;
     color: #2d2d2d;
@@ -1179,6 +1245,18 @@ button:hover {
     color: #5f7080;
     font-size: .9rem;
     line-height: 1.56;
+}
+
+.spot-card-restaurant .spot-card-price {
+    min-width: 120px;
+}
+
+.spot-card-hotel .spot-card-price {
+    min-width: 150px;
+}
+
+.attraction-card .spot-card-price {
+    min-width: 140px;
 }
 
 .section-note,

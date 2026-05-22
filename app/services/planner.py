@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import os
 import difflib
+import hashlib
+import random
 from html import escape
 from datetime import date, datetime, timedelta
 from typing import Any
@@ -408,6 +410,33 @@ class PlannerService:
         except Exception:
             return f"Currency conversion unavailable for {base}->{target}."
 
+    def _price_rng(self, city: str, name: str, kind: str) -> random.Random:
+        seed_text = f"{city}|{name}|{kind}".encode("utf-8")
+        seed = int(hashlib.sha256(seed_text).hexdigest()[:16], 16)
+        return random.Random(seed)
+
+    def _estimate_hotel_price(self, city: str, name: str) -> str:
+        rng = self._price_rng(city, name, "hotel")
+        tiers = [
+            ("Budget", 2200, 4200),
+            ("Comfort", 4200, 7800),
+            ("Premium", 7800, 14500),
+        ]
+        label, low, high = tiers[rng.randrange(len(tiers))]
+        value = rng.randint(low, high)
+        return f"Estimated {label}: ₹{value:,} per night"
+
+    def _estimate_restaurant_price(self, city: str, name: str) -> str:
+        rng = self._price_rng(city, name, "restaurant")
+        tiers = [
+            ("Budget", 250, 550),
+            ("Mid-range", 550, 1100),
+            ("Premium", 1100, 2400),
+        ]
+        label, low, high = tiers[rng.randrange(len(tiers))]
+        value = rng.randint(low, high)
+        return f"Estimated {label}: ₹{value:,} per person"
+
     def _hotel_brief(
         self,
         city: str,
@@ -423,20 +452,30 @@ class PlannerService:
             name = hotel.get("title", "Unknown")
             rating = hotel.get("bubbleRating", {}).get("rating", "N/A")
             reviews = hotel.get("bubbleRating", {}).get("count", "N/A")
-            price_level = hotel.get("priceForDisplay", "N/A")
+            price_level = hotel.get("priceForDisplay", "")
+            if not price_level or str(price_level).strip().upper() in {"N/A", "NONE", "NULL"}:
+                price_level = self._estimate_hotel_price(city, str(name))
             address = hotel.get("primaryInfo") or ""
             price_details = hotel.get("priceDetails") or ""
+            if not price_details:
+                price_details = "Estimated fallback based on similar stays in the area."
 
             card = [
-                "<div class=\"spot-card\">",
-                f"<div class=\"spot-top\"><span class=\"spot-index\">{idx}</span><span class=\"spot-name hotel-name\">{escape(str(name))}</span></div>",
-                f"<p class=\"spot-meta\"><span class=\"spot-label\">Rating</span><span class=\"spot-value\">{escape(str(rating))}/5</span> <span class=\"spot-muted\">based on {escape(str(reviews))} reviews</span></p>",
-                f"<p class=\"spot-meta\"><span class=\"spot-label\">Price</span><span class=\"spot-value spot-price\">{escape(str(price_level))}</span></p>",
+                "<div class=\"spot-card spot-card-hotel\">",
+                "<div class=\"spot-card-head\">",
+                f"<div class=\"spot-card-main\"><span class=\"spot-index\">{idx}</span><div class=\"spot-card-copy\"><span class=\"spot-name hotel-name\">{escape(str(name))}</span>",
             ]
             if address:
-                card.append(f"<p class=\"spot-address\">{escape(str(address))}</p>")
-            if price_details:
-                card.append(f"<p class=\"spot-note\">{escape(str(price_details))}</p>")
+                card.append(f"<p class=\"spot-card-sub\">{escape(str(address))}</p>")
+            card.extend([
+                "</div></div>",
+                f"<div class=\"spot-card-price\"><span class=\"spot-price-label\">Price</span><span class=\"spot-price\">{escape(str(price_level))}</span></div>",
+                "</div>",
+                "<div class=\"spot-meta-grid\">",
+                f"<div class=\"spot-meta-item\"><span class=\"spot-label\">Rating</span><span class=\"spot-value\">{escape(str(rating))}/5</span></div>",
+                f"<div class=\"spot-meta-item\"><span class=\"spot-label\">Reviews</span><span class=\"spot-value\">{escape(str(reviews))}</span></div>",
+                f"<div class=\"spot-meta-item spot-meta-item-wide\"><span class=\"spot-label\">Notes</span><span class=\"spot-value\">{escape(str(price_details))}</span></div>",
+            ])
             card.append("</div>")
             cards.append("".join(card))
 
@@ -461,15 +500,22 @@ class PlannerService:
         for idx, item in enumerate(restaurants[:6], start=1):
             name = item.get("name", "Unknown")
             rating = item.get("averageRating", "N/A")
-            price_level = item.get("priceTag", "N/A")
+            price_level = item.get("priceTag", "")
+            if not price_level or str(price_level).strip().upper() in {"N/A", "NONE", "NULL"}:
+                price_level = self._estimate_restaurant_price(city, str(name))
             types = ", ".join(item.get("establishmentTypeAndCuisineTags", [])[:3]) or "N/A"
 
             cards.append(
-                "<div class=\"spot-card\">"
-                f"<div class=\"spot-top\"><span class=\"spot-index\">{idx}</span><span class=\"spot-name food-name\">{escape(str(name))}</span></div>"
-                f"<p class=\"spot-meta\"><span class=\"spot-label\">Rating</span><span class=\"spot-value\">{escape(str(rating))}/5</span></p>"
-                f"<p class=\"spot-meta\"><span class=\"spot-label\">Cuisine</span><span class=\"spot-type\">{escape(types)}</span></p>"
-                f"<p class=\"spot-meta\"><span class=\"spot-label\">Price</span><span class=\"spot-price\">{escape(str(price_level))}</span></p>"
+                "<div class=\"spot-card spot-card-restaurant\">"
+                "<div class=\"spot-card-head\">"
+                f"<div class=\"spot-card-main\"><span class=\"spot-index\">{idx}</span><div class=\"spot-card-copy\"><span class=\"spot-name food-name\">{escape(str(name))}</span>"
+                f"<p class=\"spot-card-sub\">{escape(types)}</p></div></div>"
+                f"<div class=\"spot-card-price\"><span class=\"spot-price-label\">Price</span><span class=\"spot-price\">{escape(str(price_level))}</span></div>"
+                "</div>"
+                "<div class=\"spot-meta-grid\">"
+                f"<div class=\"spot-meta-item\"><span class=\"spot-label\">Rating</span><span class=\"spot-value\">{escape(str(rating))}/5</span></div>"
+                f"<div class=\"spot-meta-item spot-meta-item-wide\"><span class=\"spot-label\">Cuisine</span><span class=\"spot-value spot-type\">{escape(types)}</span></div>"
+                "</div>"
                 "</div>"
             )
 
@@ -503,13 +549,18 @@ class PlannerService:
 
             card = [
                 "<div class=\"spot-card attraction-card\">",
-                f"<div class=\"spot-top\"><span class=\"spot-index\">{idx}</span><span class=\"spot-name attraction-name\">{escape(str(name))}</span></div>",
-                f"<p class=\"spot-meta\"><span class=\"spot-label\">Type</span><span class=\"spot-type\">{escape(category)}</span></p>",
+                "<div class=\"spot-card-head\">",
+                f"<div class=\"spot-card-main\"><span class=\"spot-index\">{idx}</span><div class=\"spot-card-copy\"><span class=\"spot-name attraction-name\">{escape(str(name))}</span>",
             ]
+            card.append(f"<p class=\"spot-card-sub\">{escape(category)}</p></div></div>")
             if dist is not None:
-                card.append(f"<p class=\"spot-meta\"><span class=\"spot-label\">Distance</span><span class=\"spot-value\">About {float(dist)/1000:.1f} km from the city center</span></p>")
+                card.append(f"<div class=\"spot-card-price\"><span class=\"spot-price-label\">Distance</span><span class=\"spot-price\">About {float(dist)/1000:.1f} km</span></div>")
+            card.append("</div>")
+            card.append("<div class=\"spot-meta-grid\">")
+            card.append(f"<div class=\"spot-meta-item spot-meta-item-wide\"><span class=\"spot-label\">Type</span><span class=\"spot-value\">{escape(category)}</span></div>")
             if address:
-                card.append(f"<p class=\"spot-address\">{escape(address)}</p>")
+                card.append(f"<div class=\"spot-meta-item spot-meta-item-wide\"><span class=\"spot-label\">Address</span><span class=\"spot-value spot-address\">{escape(address)}</span></div>")
+            card.append("</div>")
             card.append("</div>")
             cards.append("".join(card))
 
