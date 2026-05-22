@@ -12,7 +12,6 @@ class WeatherAgent:
             api_key=os.getenv("GROQ_API_KEY", ""),
             temperature=0.6,
             max_tokens=700,
-            
         )
 
         self.prompt = PromptTemplate(
