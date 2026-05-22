@@ -1154,7 +1154,7 @@ button:hover {
 
 .summary-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: 12px;
 }
 
@@ -1294,42 +1294,48 @@ button:hover {
 }
 
 .spot-meta-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 10px;
+    align-items: flex-start;
 }
 
 .spot-meta-item {
     border: 1px solid #ecdfcf;
     background: #fffdf9;
     border-radius: 12px;
-    padding: 10px 12px;
+    padding: 8px 10px;
+    flex: 0 1 auto;
+    white-space: nowrap;
+    font-size: 0.9rem;
 }
 
 .spot-meta-item-wide {
-    grid-column: 1 / -1;
+    flex-basis: 100%;
+    white-space: normal;
 }
 
 .spot-card-restaurant .spot-meta-grid,
 .spot-card-hotel .spot-meta-grid,
 .attraction-card .spot-meta-grid {
-    align-items: stretch;
+    align-items: flex-start;
 }
 
 .spot-card-restaurant .spot-meta-item-wide,
 .spot-card-hotel .spot-meta-item-wide,
 .attraction-card .spot-meta-item-wide {
-    grid-column: 1 / -1;
+    flex-basis: 100%;
 }
 
 .spot-meta-item .spot-label {
-    display: block;
-    min-width: 0;
-    margin: 0 0 4px;
+    display: inline;
+    min-width: auto;
+    margin: 0 3px 0 0;
+    font-size: 0.75rem;
 }
 
 .spot-meta-item .spot-value {
-    display: block;
+    display: inline;
     line-height: 1.55;
 }
 

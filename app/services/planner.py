@@ -596,17 +596,17 @@ class PlannerService:
 
     <section class=\"result-card\">
         <h3>Where you could stay</h3>
-        {self._to_html_blocks(hotels)}
+        {hotels}
     </section>
 
     <section class=\"result-card two-col\">
         <div>
             <h3>Food ideas</h3>
-            {self._to_html_blocks(restaurants)}
+            {restaurants}
         </div>
         <div>
             <h3>What to see</h3>
-            {self._to_html_blocks(attractions)}
+            {attractions}
         </div>
     </section>
 
