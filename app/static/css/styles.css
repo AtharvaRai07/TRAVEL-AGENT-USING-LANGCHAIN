@@ -1164,8 +1164,10 @@ button:hover {
     padding: 14px;
     background: linear-gradient(180deg, #fffdf9 0%, #fbf5eb 100%);
     box-shadow: 0 6px 16px rgba(43, 60, 74, 0.04);
-    display: grid;
-    gap: 12px;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 14px;
 }
 
 .spot-card+.spot-card {
@@ -1236,8 +1238,10 @@ button:hover {
 }
 
 .spot-card-body {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 10px;
+    flex: 1 1 auto;
 }
 
 .spot-label {
@@ -1504,8 +1508,14 @@ body.dark-mode .spot-note {
     gap: 4px;
 }
 
+.result-card.two-col {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
 .result-card.two-col .summary-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .result-card.two-col>div h3 {
