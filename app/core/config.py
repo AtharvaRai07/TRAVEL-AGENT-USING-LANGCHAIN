@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     app_name: str = "Go Bharat"
     environment: str = "development"
     debug: bool = True
-    host: str = "127.0.0.1"
+    host: str = "0.0.0.0"
     port: int = 8000
 
     supabase_url: str = ""
